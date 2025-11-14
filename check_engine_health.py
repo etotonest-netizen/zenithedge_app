@@ -8,7 +8,12 @@ import os
 import sys
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings')
+# Try production settings first, fallback to default
+if os.path.exists('zenithedge/settings_production.py'):
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings_production')
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings')
+
 django.setup()
 
 print("=" * 60)
