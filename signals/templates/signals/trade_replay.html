@@ -1,0 +1,437 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analysis Replay - {{ signal.symbol }} - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(15, 20, 25, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card {
+            background: rgba(26, 31, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        #chartContainer {
+            height: 500px;
+            background: #1a1f2e;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .controls {
+            background: rgba(26, 31, 46, 0.9);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            border-radius: 50%;
+        }
+        .stage-indicator {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .stage-entry { background: rgba(13, 110, 253, 0.2); color: #0d6efd; border: 2px solid #0d6efd; }
+        .stage-tp { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 2px solid #28a745; }
+        .stage-sl { background: rgba(220, 53, 69, 0.2); color: #dc3545; border: 2px solid #dc3545; }
+        .stage-active { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 2px solid #ffc107; }
+        .trade-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .info-item {
+            background: rgba(15, 20, 25, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .info-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .info-value {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .slider-container {
+            position: relative;
+            padding: 1rem 0;
+        }
+        .bar-slider {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'signals:home' %}">
+                <i class="bi bi-graph-up-arrow"></i> ZenithEdge
+            </a>
+            <div class="ms-auto">
+                <a href="{% url 'signals:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% else %}
+        
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6 fw-bold text-white">
+                    <i class="bi bi-play-circle text-primary"></i> Trade Replay
+                </h1>
+                <p class="text-secondary">Watch your trade unfold candle by candle</p>
+            </div>
+        </div>
+
+        <!-- Trade Info -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="trade-info">
+                    <div class="info-item">
+                        <div class="info-label">Symbol</div>
+                        <div class="info-value">{{ signal.symbol }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Market Bias</div>
+                        <div class="info-value" style="color: {% if signal.side == 'buy' %}#2c7a7b{% else %}#d69e2e{% endif %}">
+                            {% if signal.side == 'buy' %}BULLISH{% else %}BEARISH{% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Observation Price</div>
+                        <div class="info-value">{{ replay_data.entry_price }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Confidence</div>
+                        <div class="info-value text-info">{{ signal.confidence|floatformat:1 }}%</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Insight Index</div>
+                        <div class="info-value text-success">
+                            {% if signal.ai_score %}{{ signal.ai_score.ai_score }}{% else %}N/A{% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Strategy</div>
+                        <div class="info-value">{{ signal.strategy }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Regime</div>
+                        <div class="info-value">{{ signal.regime }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Session</div>
+                        <div class="info-value">{{ signal.session|default:"N/A" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage Indicator -->
+        <div class="text-center mb-4">
+            <div class="stage-indicator" id="stageIndicator">
+                <i class="bi bi-hourglass-split"></i> <span id="stageText">Initializing...</span>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div id="chartContainer"></div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center mb-3 mb-md-0">
+                    <div class="btn-group" role="group">
+                        <button id="resetBtn" class="btn btn-outline-secondary control-btn">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button id="prevBtn" class="btn btn-outline-secondary control-btn mx-2">
+                            <i class="bi bi-skip-backward-fill"></i>
+                        </button>
+                        <button id="playBtn" class="btn btn-primary control-btn">
+                            <i class="bi bi-play-fill" id="playIcon"></i>
+                        </button>
+                        <button id="nextBtn" class="btn btn-outline-secondary control-btn mx-2">
+                            <i class="bi bi-skip-forward-fill"></i>
+                        </button>
+                        <button id="endBtn" class="btn btn-outline-secondary control-btn">
+                            <i class="bi bi-skip-end-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="slider-container">
+                        <label class="form-label text-white">
+                            Bar <span id="currentBar">0</span> / <span id="totalBars">0</span>
+                        </label>
+                        <input type="range" class="bar-slider form-range" id="barSlider" min="0" max="100" value="0">
+                    </div>
+                </div>
+                
+                <div class="col-md-3 text-center">
+                    <label class="form-label text-white d-block">Speed</label>
+                    <select id="speedSelect" class="form-select">
+                        <option value="2000">Slow (2s)</option>
+                        <option value="1000" selected>Normal (1s)</option>
+                        <option value="500">Fast (0.5s)</option>
+                        <option value="200">Very Fast (0.2s)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script>
+        // Replay data from Django
+        const replayData = {{ replay_data|safe }};
+        const entryBarIndex = {{ entry_bar_index|default:0 }};
+        const exitBarIndex = {{ exit_bar_index|default:"null" }};
+        const exitReason = "{{ exit_reason }}";
+        
+        // Chart setup
+        const chartContainer = document.getElementById('chartContainer');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            layout: {
+                background: { color: '#1a1f2e' },
+                textColor: '#d1d4dc',
+            },
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+            timeScale: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        });
+
+        // Price lines for Observation Point
+        const observationLine = candleSeries.createPriceLine({
+            price: replayData.entry_price,
+            color: '#0d6efd',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            axisLabelVisible: true,
+            title: 'Observation',
+        });
+
+        // Support and resistance references (educational context)
+        const supportLine = replayData.sl ? candleSeries.createPriceLine({
+            price: replayData.sl,
+            color: '#d69e2e',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: 'Support Zone',
+        }) : null;
+
+        const resistanceLine = replayData.tp ? candleSeries.createPriceLine({
+            price: replayData.tp,
+            color: '#2c7a7b',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: 'Resistance Zone',
+        }) : null;
+
+        // Replay state
+        let currentBarIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        let speed = 1000;
+
+        const allBars = replayData.bars || [];
+        const totalBars = allBars.length;
+
+        document.getElementById('totalBars').textContent = totalBars;
+        document.getElementById('barSlider').max = totalBars - 1;
+
+        // Update chart with current bars
+        function updateChart() {
+            const visibleBars = allBars.slice(0, currentBarIndex + 1);
+            candleSeries.setData(visibleBars);
+            
+            document.getElementById('currentBar').textContent = currentBarIndex + 1;
+            document.getElementById('barSlider').value = currentBarIndex;
+            
+            updateStageIndicator();
+            chart.timeScale().fitContent();
+        }
+
+        // Update stage indicator
+        function updateStageIndicator() {
+            const indicator = document.getElementById('stageIndicator');
+            const text = document.getElementById('stageText');
+            
+            if (currentBarIndex < entryBarIndex) {
+                indicator.className = 'stage-indicator stage-active';
+                text.innerHTML = '<i class="bi bi-hourglass-split"></i> Pre-Observation Phase';
+            } else if (currentBarIndex === entryBarIndex) {
+                indicator.className = 'stage-indicator stage-entry';
+                text.innerHTML = '<i class="bi bi-flag-fill"></i> Market Insight Generated';
+            } else if (exitBarIndex !== null && currentBarIndex >= exitBarIndex) {
+                if (exitReason === 'tp_hit') {
+                    indicator.className = 'stage-indicator stage-tp';
+                    text.innerHTML = '<i class="bi bi-check-circle-fill"></i> Resistance Zone Reached - Analysis Confirmed';
+                } else if (exitReason === 'sl_hit') {
+                    indicator.className = 'stage-indicator stage-sl';
+                    text.innerHTML = '<i class="bi bi-x-circle-fill"></i> Support Zone Reached - Analysis Invalidated';
+                } else {
+                    indicator.className = 'stage-indicator stage-active';
+                    text.innerHTML = '<i class="bi bi-clock-fill"></i> Observation Period Ended';
+                }
+            } else {
+                indicator.className = 'stage-indicator stage-active';
+                text.innerHTML = '<i class="bi bi-graph-up"></i> Monitoring Market Behavior';
+            }
+        }
+
+        // Play/Pause
+        document.getElementById('playBtn').addEventListener('click', function() {
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('playIcon');
+            
+            if (isPlaying) {
+                icon.className = 'bi bi-pause-fill';
+                playInterval = setInterval(() => {
+                    if (currentBarIndex < totalBars - 1) {
+                        currentBarIndex++;
+                        updateChart();
+                    } else {
+                        isPlaying = false;
+                        icon.className = 'bi bi-play-fill';
+                        clearInterval(playInterval);
+                    }
+                }, speed);
+            } else {
+                icon.className = 'bi bi-play-fill';
+                clearInterval(playInterval);
+            }
+        });
+
+        // Previous bar
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentBarIndex > 0) {
+                currentBarIndex--;
+                updateChart();
+            }
+        });
+
+        // Next bar
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentBarIndex < totalBars - 1) {
+                currentBarIndex++;
+                updateChart();
+            }
+        });
+
+        // Reset
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            currentBarIndex = 0;
+            updateChart();
+            if (isPlaying) {
+                document.getElementById('playBtn').click();
+            }
+        });
+
+        // Jump to end
+        document.getElementById('endBtn').addEventListener('click', () => {
+            currentBarIndex = totalBars - 1;
+            updateChart();
+        });
+
+        // Slider
+        document.getElementById('barSlider').addEventListener('input', function() {
+            currentBarIndex = parseInt(this.value);
+            updateChart();
+            if (isPlaying) {
+                document.getElementById('playBtn').click();
+            }
+        });
+
+        // Speed control
+        document.getElementById('speedSelect').addEventListener('change', function() {
+            speed = parseInt(this.value);
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playInterval = setInterval(() => {
+                    if (currentBarIndex < totalBars - 1) {
+                        currentBarIndex++;
+                        updateChart();
+                    } else {
+                        isPlaying = false;
+                        document.getElementById('playIcon').className = 'bi bi-play-fill';
+                        clearInterval(playInterval);
+                    }
+                }, speed);
+            }
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: chartContainer.clientWidth });
+        });
+
+        // Initial render
+        updateChart();
+    </script>
+</body>
+</html>

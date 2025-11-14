@@ -1,0 +1,616 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Setup Wizard - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .wizard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .wizard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .wizard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .wizard-header h1 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .wizard-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--glass-border);
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary-gradient);
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-circle {
+            background: var(--success-gradient);
+            border-color: #11998e;
+        }
+
+        .step-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .step.active .step-label {
+            color: #fff;
+        }
+
+        .wizard-content {
+            margin-top: 2rem;
+        }
+
+        .webhook-url-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .webhook-url {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #4ade80;
+            word-break: break-all;
+            margin: 0;
+        }
+
+        .copy-btn {
+            background: var(--success-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .copy-btn i {
+            margin-right: 0.5rem;
+        }
+
+        .json-template {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .json-template pre {
+            color: #d4d4d4;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .json-template code {
+            color: #ce9178;
+        }
+
+        .instruction-box {
+            background: var(--glass-bg);
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .instruction-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .alert-custom {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .alert-info {
+            border-left-color: #3b82f6;
+        }
+
+        .alert-warning {
+            border-left-color: #f59e0b;
+        }
+
+        .alert-success {
+            border-left-color: #10b981;
+        }
+
+        .nav-btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary-grad {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-secondary-grad {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: white;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .action-btns button {
+            flex: 1;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <!-- Back Button -->
+        <a href="{% url 'signals:dashboard' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <!-- Header -->
+        <div class="wizard-header">
+            <h1><i class="bi bi-broadcast"></i> Webhook Setup Wizard</h1>
+            <p>Connect your TradingView alerts to ZenithEdge in 3 easy steps</p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="wizard-card">
+            <div class="step-indicator">
+                <div class="step active completed">
+                    <div class="step-circle"><i class="bi bi-link-45deg"></i></div>
+                    <div class="step-label">Get URL</div>
+                </div>
+                <div class="step active completed">
+                    <div class="step-circle"><i class="bi bi-code-square"></i></div>
+                    <div class="step-label">Copy Template</div>
+                </div>
+                <div class="step active completed">
+                    <div class="step-circle"><i class="bi bi-check-circle"></i></div>
+                    <div class="step-label">Setup Alert</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Webhook URL -->
+        <div class="wizard-card">
+            <h2><i class="bi bi-1-circle-fill text-primary"></i> Your Unique Webhook URL</h2>
+            <p class="text-muted">This is your personal webhook URL. Keep it secure and don't share it publicly.</p>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="status-badge {% if webhook_config.is_active %}status-active{% else %}status-inactive{% endif %}" id="statusBadge">
+                        <i class="bi bi-circle-fill"></i> {% if webhook_config.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+                <div class="action-btns" style="max-width: 400px;">
+                    <button class="btn btn-sm btn-secondary-grad" onclick="toggleWebhook()">
+                        <i class="bi bi-power"></i> Toggle Status
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="regenerateWebhook()">
+                        <i class="bi bi-arrow-clockwise"></i> Regenerate
+                    </button>
+                </div>
+            </div>
+
+            <div class="webhook-url-box">
+                <p class="webhook-url" id="webhookUrl">{{ webhook_url }}</p>
+                <button class="copy-btn" onclick="copyWebhookUrl()">
+                    <i class="bi bi-clipboard"></i> Copy Webhook URL
+                </button>
+            </div>
+
+            <div class="alert-custom alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Note:</strong> This URL is unique to your account. Use it in your TradingView alert settings.
+            </div>
+        </div>
+
+        <!-- Step 2: JSON Template -->
+        <div class="wizard-card">
+            <h2><i class="bi bi-2-circle-fill text-primary"></i> TradingView Alert Message Template</h2>
+            <p class="text-muted">Copy this JSON template and paste it into your TradingView alert message field.</p>
+
+            <div class="json-template">
+                <pre id="jsonTemplate"><code>{{ tv_json_template }}</code></pre>
+            </div>
+
+            <button class="copy-btn" onclick="copyJsonTemplate()">
+                <i class="bi bi-clipboard"></i> Copy JSON Template
+            </button>
+
+            <div class="alert-custom alert-warning mt-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Important:</strong> Make sure your Pine Script outputs the required plots (plot_0 through plot_5) for SL, TP, confidence, strategy, regime, and session.
+            </div>
+        </div>
+
+        <!-- Step 3: Instructions -->
+        <div class="wizard-card">
+            <h2><i class="bi bi-3-circle-fill text-primary"></i> Setup Instructions</h2>
+            <p class="text-muted">Follow these steps to create an alert in TradingView:</p>
+
+            <div class="instruction-box">
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h5>Open TradingView Chart</h5>
+                        <p class="text-muted">Go to TradingView and open the chart with your Pine Script indicator/strategy.</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h5>Create Alert</h5>
+                        <p class="text-muted">Click the <strong>Alert</strong> button (bell icon) at the top right, or press <code>Alt + A</code>.</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h5>Configure Alert Condition</h5>
+                        <p class="text-muted">Select your indicator/strategy and the condition that triggers the alert (e.g., "Any alert() function call").</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <h5>Set Alert Name</h5>
+                        <p class="text-muted">Give your alert a descriptive name (e.g., "ZenithEdge EURUSD Signals").</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">5</div>
+                    <div>
+                        <h5>Paste Webhook URL</h5>
+                        <p class="text-muted">In the <strong>Webhook URL</strong> field, paste your unique webhook URL from Step 1.</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">6</div>
+                    <div>
+                        <h5>Paste JSON Message</h5>
+                        <p class="text-muted">In the <strong>Message</strong> field, paste the JSON template from Step 2. Make sure it's valid JSON!</p>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="step-number">7</div>
+                    <div>
+                        <h5>Save & Test</h5>
+                        <p class="text-muted">Click <strong>Create</strong> and wait for your indicator to generate a signal. Check your ZenithEdge dashboard to verify it arrives!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="wizard-card">
+            <h2><i class="bi bi-graph-up text-success"></i> Webhook Statistics</h2>
+            <p class="text-muted">Track your webhook performance and signal reception.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_signals }}</div>
+                    <div class="stat-label">Total Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ webhook_signals }}</div>
+                    <div class="stat-label">Webhook Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">
+                        {% if last_signal %}
+                            {{ last_signal|timesince }} ago
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Last Signal</div>
+                </div>
+            </div>
+
+            {% if webhook_signals == 0 %}
+            <div class="alert-custom alert-info mt-3">
+                <i class="bi bi-info-circle"></i>
+                <strong>No signals yet:</strong> Once you set up your TradingView alert, signals will appear here and on your dashboard.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Help Section -->
+        <div class="wizard-card">
+            <h2><i class="bi bi-question-circle text-warning"></i> Need Help?</h2>
+            <div class="alert-custom alert-info">
+                <p><strong>Common Issues:</strong></p>
+                <ul>
+                    <li><strong>Signals not arriving?</strong> Check that your webhook URL is correct and your TradingView alert is active.</li>
+                    <li><strong>Invalid JSON error?</strong> Make sure your Pine Script has all required plot() outputs (plot_0 through plot_5).</li>
+                    <li><strong>Wrong data?</strong> Verify that {{ticker}}, {{interval}}, and plot values match your strategy outputs.</li>
+                    <li><strong>Webhook disabled?</strong> Use the "Toggle Status" button above to activate it.</li>
+                </ul>
+                <p class="mb-0"><strong>Still stuck?</strong> Ask ZenBot in the dashboard chat for help! <i class="bi bi-robot"></i></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyWebhookUrl() {
+            const url = document.getElementById('webhookUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function copyJsonTemplate() {
+            const template = document.getElementById('jsonTemplate').textContent;
+            navigator.clipboard.writeText(template).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function regenerateWebhook() {
+            if (!confirm('Are you sure? This will invalidate your current webhook URL. You\'ll need to update your TradingView alerts.')) {
+                return;
+            }
+
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'action=regenerate'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('webhookUrl').textContent = data.webhook_url;
+                    
+                    // Update JSON template
+                    const template = document.getElementById('jsonTemplate');
+                    const oldUuid = template.textContent.match(/"user_uuid": "([^"]+)"/)[1];
+                    template.textContent = template.textContent.replace(oldUuid, data.webhook_uuid);
+                    
+                    alert('✅ Webhook regenerated successfully! Don\'t forget to update your TradingView alerts.');
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            });
+        }
+
+        function toggleWebhook() {
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'action=toggle_active'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const badge = document.getElementById('statusBadge');
+                    if (data.is_active) {
+                        badge.className = 'status-badge status-active';
+                        badge.innerHTML = '<i class="bi bi-circle-fill"></i> Active';
+                    } else {
+                        badge.className = 'status-badge status-inactive';
+                        badge.innerHTML = '<i class="bi bi-circle-fill"></i> Inactive';
+                    }
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

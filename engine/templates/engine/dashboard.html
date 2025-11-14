@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trading Engine - ZenithEdge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .endpoint-card {
+        background: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    .endpoint-method {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+    .method-get { background: #28a745; color: white; }
+    .method-post { background: #ffc107; color: #000; }
+    .code-snippet {
+        background: #2d2d2d;
+        color: #f8f8f2;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        overflow-x: auto;
+    }
+    .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 mb-2">⚡ Trading Engine Dashboard</h1>
+            <p class="lead text-muted">Advanced market analysis, backtesting, and signal generation platform</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="stat-label">Total Backtests</div>
+                    <div class="stat-value">{{ stats.total_backtests }}</div>
+                    <small><i class="fas fa-chart-line"></i> All time</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value">{{ stats.completed_backtests }}</div>
+                    <small><i class="fas fa-check-circle"></i> Successful runs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="stat-label">Market Bars</div>
+                    <div class="stat-value">{{ stats.market_bars_count|default:"0" }}</div>
+                    <small><i class="fas fa-database"></i> OHLCV data points</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="stat-label">Engine Version</div>
+                    <div class="stat-value">{{ stats.engine_version }}</div>
+                    <small><i class="fas fa-code-branch"></i> {{ stats.status|upper }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon">📊</div>
+                    <h5>Market Data Storage</h5>
+                    <p class="text-muted">Store and manage OHLCV candlestick data for multiple symbols and timeframes with optimized indexing.</p>
+                    <a href="/admin/engine/marketbar/" class="btn btn-outline-primary btn-sm">View Data</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon">🎯</div>
+                    <h5>Strategy Backtesting</h5>
+                    <p class="text-muted">Test trading strategies against historical data with detailed performance metrics and trade analytics.</p>
+                    <a href="/admin/engine/backtestrun/" class="btn btn-outline-success btn-sm">View Backtests</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon">🎨</div>
+                    <h5>Visual Overlays</h5>
+                    <p class="text-muted">Generate TradingView-compatible visual overlays for market structure, support/resistance, and patterns.</p>
+                    <a href="#api-endpoints" class="btn btn-outline-info btn-sm">API Docs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Endpoints -->
+    <div class="row mb-4" id="api-endpoints">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-plug"></i> API Endpoints</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="endpoint-card">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/engine/api/status/</strong>
+                        <p class="mb-1 mt-2 text-muted">Get engine status, recent activity, and system health</p>
+                        <div class="code-snippet">
+curl https://etotonest.com/engine/api/status/</div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/engine/api/visuals/latest/</strong>
+                        <p class="mb-1 mt-2 text-muted">Get visual overlays for the latest signal</p>
+                        <div class="code-snippet">
+curl "https://etotonest.com/engine/api/visuals/latest/?symbol=EURUSD&timeframe=1H"</div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/engine/api/visuals/{signal_id}/</strong>
+                        <p class="mb-1 mt-2 text-muted">Get visual overlays for a specific signal</p>
+                        <div class="code-snippet">
+curl https://etotonest.com/engine/api/visuals/123/</div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/engine/api/visuals/backtest/{backtest_id}/</strong>
+                        <p class="mb-1 mt-2 text-muted">Get visual data for a backtest run (equity curve, trades)</p>
+                        <div class="code-snippet">
+curl https://etotonest.com/engine/api/visuals/backtest/1/</div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="endpoint-method method-post">POST</span>
+                        <strong>/engine/api/detect/</strong>
+                        <p class="mb-1 mt-2 text-muted">Manually trigger strategy detection for a symbol</p>
+                        <div class="code-snippet">
+curl -X POST https://etotonest.com/engine/api/detect/ \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "EURUSD", "timeframe": "1H"}'</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Commands -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-terminal"></i> Management Commands</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <h6 class="mt-3"><i class="fas fa-play-circle text-success"></i> Run Backtest</h6>
+                    <div class="code-snippet mb-3">
+python manage.py run_backtest \
+  --strategy=SMC \
+  --symbol=EURUSD \
+  --start=2024-01-01 \
+  --end=2024-12-31 \
+  --risk=1.0 \
+  --fetch</div>
+
+                    <h6 class="mt-4"><i class="fas fa-sync-alt text-info"></i> Fetch Data & Run Detection</h6>
+                    <div class="code-snippet mb-3">
+python manage.py fetch_and_run \
+  --symbols=EURUSD,GBPUSD,BTCUSD \
+  --timeframes=1H,4H \
+  --create-signals</div>
+
+                    <h6 class="mt-4"><i class="fas fa-clock text-warning"></i> Setup Cron Job (Auto-run every 5 minutes)</h6>
+                    <div class="code-snippet">
+*/5 * * * * cd ~/etotonest.com && source virtualenv/etotonest.com/3.11/bin/activate && \
+  python manage.py fetch_and_run --settings=zenithedge.settings_production >> logs/engine.log 2>&1</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-link"></i> Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="/admin/engine/backtestrun/" class="btn btn-outline-primary btn-block mb-2">
+                                <i class="fas fa-chart-bar"></i> View All Backtests
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/engine/marketbar/" class="btn btn-outline-info btn-block mb-2">
+                                <i class="fas fa-database"></i> Market Data
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/engine/backtesttrade/" class="btn btn-outline-success btn-block mb-2">
+                                <i class="fas fa-list"></i> Trade History
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/engine/api/status/" class="btn btn-outline-warning btn-block mb-2" target="_blank">
+                                <i class="fas fa-heartbeat"></i> API Status
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh status every 30 seconds
+    setInterval(() => {
+        fetch('/engine/api/status/')
+            .then(r => r.json())
+            .then(data => console.log('Engine Status:', data.status))
+            .catch(e => console.error('Status check failed:', e));
+    }, 30000);
+</script>
+{% endblock %}

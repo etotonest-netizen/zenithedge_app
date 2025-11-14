@@ -1,0 +1,6 @@
+PassengerEnabled on
+PassengerAppRoot "/home/equabish/etotonest.com"
+PassengerBaseURI "/"
+PassengerPython "/home/equabish/virtualenv/etotonest.com/3.11/bin/python"
+PassengerAppEnv production
+PassengerStartupFile passenger_wsgi.py

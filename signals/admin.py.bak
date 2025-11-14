@@ -1,0 +1,320 @@
+from django.contrib import admin
+from .models import Signal, PropRules, StrategyPerformance, SessionRule, RiskControl
+
+
+@admin.register(RiskControl)
+class RiskControlAdmin(admin.ModelAdmin):
+    """Admin interface for RiskControl model"""
+    
+    list_display = [
+        'user',
+        'is_active',
+        'is_halted',
+        'max_consecutive_losers',
+        'max_daily_trades',
+        'max_red_signals_per_day',
+        'halt_triggered_at',
+        'updated_at'
+    ]
+    
+    list_filter = [
+        'is_active',
+        'is_halted',
+        'halt_until_reset',
+        'user'
+    ]
+    
+    search_fields = ['user__email', 'halt_reason', 'notes']
+    
+    readonly_fields = ['halt_triggered_at', 'last_reset_at', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('User', {
+            'fields': ('user',)
+        }),
+        ('Risk Thresholds', {
+            'fields': ('max_consecutive_losers', 'max_daily_trades', 'max_red_signals_per_day')
+        }),
+        ('Control Settings', {
+            'fields': ('is_active', 'halt_until_reset')
+        }),
+        ('Halt Status', {
+            'fields': ('is_halted', 'halt_reason', 'halt_triggered_at', 'last_reset_at'),
+            'classes': ('wide',)
+        }),
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['reset_halt_action']
+    
+    def reset_halt_action(self, request, queryset):
+        """Admin action to reset halt status"""
+        count = 0
+        for risk_control in queryset:
+            risk_control.reset_halt()
+            count += 1
+        self.message_user(request, f'Successfully reset halt status for {count} risk control(s).')
+    reset_halt_action.short_description = "Reset halt status"
+    
+    def get_queryset(self, request):
+        """Filter risk controls based on user role"""
+        qs = super().get_queryset(request)
+        if not request.user.is_admin and not request.user.is_staff:
+            return qs.filter(user=request.user)
+        return qs
+
+
+@admin.register(SessionRule)
+class SessionRuleAdmin(admin.ModelAdmin):
+    """Admin interface for SessionRule model"""
+    
+    list_display = [
+        'session',
+        'user',
+        'weight',
+        'is_blocked',
+        'created_at',
+        'updated_at'
+    ]
+    
+    list_filter = [
+        'session',
+        'is_blocked',
+        'user'
+    ]
+    
+    search_fields = ['user__email', 'notes']
+    
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Session Configuration', {
+            'fields': ('session', 'user', 'weight', 'is_blocked')
+        }),
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        """Filter session rules based on user role"""
+        qs = super().get_queryset(request)
+        if not request.user.is_admin and not request.user.is_staff:
+            return qs.filter(user=request.user)
+        return qs
+
+
+@admin.register(PropRules)
+class PropRulesAdmin(admin.ModelAdmin):
+    """Admin interface for PropRules model"""
+    
+    list_display = [
+        'name',
+        'is_active',
+        'max_daily_loss_pct',
+        'max_trades_per_day',
+        'max_open_positions',
+        'min_confidence_score',
+        'blackout_minutes',
+        'allow_weekend_trading'
+    ]
+    
+    list_filter = [
+        'is_active',
+        'allow_weekend_trading'
+    ]
+    
+    search_fields = ['name']
+    
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('General', {
+            'fields': ('name', 'is_active', 'account_balance')
+        }),
+        ('Daily Limits', {
+            'fields': ('max_daily_loss_pct', 'max_daily_loss_amount', 'max_trades_per_day')
+        }),
+        ('Position Management', {
+            'fields': ('max_open_positions', 'max_position_size_pct', 'max_risk_per_trade_pct')
+        }),
+        ('Time Restrictions', {
+            'fields': ('blackout_minutes', 'trading_start_time', 'trading_end_time', 'allow_weekend_trading')
+        }),
+        ('Symbol Restrictions', {
+            'fields': ('allowed_symbols', 'blacklisted_symbols'),
+            'description': 'Enter comma-separated symbol names (e.g., BTCUSDT, ETHUSDT)'
+        }),
+        ('Quality Filters', {
+            'fields': ('min_confidence_score',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Signal)
+class SignalAdmin(admin.ModelAdmin):
+    """Admin interface for Signal model"""
+    
+    list_display = [
+        'id',
+        'symbol',
+        'timeframe',
+        'side',
+        'regime',
+        'session',
+        'strategy',
+        'confidence',
+        'user',
+        'is_allowed',
+        'price',
+        'sl',
+        'tp',
+        'received_at'
+    ]
+    
+    list_filter = [
+        'is_allowed',
+        'side',
+        'regime',
+        'session',
+        'strategy',
+        'timeframe',
+        'user',
+        'prop_rule_checked',
+        'received_at'
+    ]
+    
+    search_fields = [
+        'symbol',
+        'strategy',
+        'regime',
+        'user__email'
+    ]
+    
+    def get_queryset(self, request):
+        """Filter signals based on user role"""
+        qs = super().get_queryset(request)
+        if not request.user.is_admin and not request.user.is_staff:
+            return qs.filter(user=request.user)
+        return qs
+    
+    readonly_fields = [
+        'received_at',
+        'updated_at'
+    ]
+    
+    ordering = ['-received_at']
+    
+    date_hierarchy = 'received_at'
+    
+    fieldsets = (
+        ('Signal Information', {
+            'fields': ('symbol', 'timeframe', 'side', 'regime', 'session', 'strategy')
+        }),
+        ('Price Levels', {
+            'fields': ('price', 'sl', 'tp', 'confidence')
+        }),
+        ('Prop Rules Validation', {
+            'fields': ('is_allowed', 'rejection_reason', 'prop_rule_checked'),
+            'classes': ('wide',)
+        }),
+        ('Metadata', {
+            'fields': ('timestamp', 'received_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        """Disable manual adding of signals through admin"""
+        return False
+
+
+@admin.register(StrategyPerformance)
+class StrategyPerformanceAdmin(admin.ModelAdmin):
+    """Admin interface for StrategyPerformance model"""
+    
+    list_display = [
+        'id',
+        'strategy_name',
+        'regime',
+        'symbol',
+        'timeframe',
+        'total_trades',
+        'win_rate',
+        'avg_rr',
+        'profit_factor',
+        'is_profitable',
+        'user',
+        'last_updated'
+    ]
+    
+    list_filter = [
+        'regime',
+        'symbol',
+        'timeframe',
+        'user',
+        'last_updated'
+    ]
+    
+    search_fields = [
+        'strategy_name',
+        'symbol',
+        'user__email'
+    ]
+    
+    readonly_fields = [
+        'last_updated',
+        'created_at',
+        'performance_score'
+    ]
+    
+    ordering = ['-win_rate', '-total_trades']
+    
+    fieldsets = (
+        ('Strategy Information', {
+            'fields': ('strategy_name', 'regime', 'symbol', 'timeframe', 'user')
+        }),
+        ('Trade Statistics', {
+            'fields': ('total_trades', 'winning_trades', 'losing_trades', 'win_rate')
+        }),
+        ('Risk-Reward Metrics', {
+            'fields': ('avg_rr', 'total_rr', 'avg_confidence')
+        }),
+        ('Profitability', {
+            'fields': ('total_pnl', 'avg_win', 'avg_loss', 'profit_factor')
+        }),
+        ('Drawdown', {
+            'fields': ('max_drawdown', 'current_drawdown')
+        }),
+        ('Analysis Period', {
+            'fields': ('analysis_period_start', 'analysis_period_end', 'last_updated', 'created_at'),
+            'classes': ('collapse',)
+        }),
+        ('Performance Score', {
+            'fields': ('performance_score',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        """Filter performance records based on user role"""
+        qs = super().get_queryset(request)
+        if not request.user.is_admin and not request.user.is_staff:
+            return qs.filter(user=request.user)
+        return qs

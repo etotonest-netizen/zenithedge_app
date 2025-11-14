@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if signal %}Insight #{{ signal.id }} - {{ signal.symbol }}{% else %}Insight Not Found{% endif %} | ZenithEdge</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .page-header h1 i {
+            font-size: 2.5rem;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateX(-3px);
+        }
+        
+        .insight-metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .insight-metric-card {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        .insight-metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .insight-metric-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .insight-metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #a78bfa;
+        }
+        
+        .insight-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-left: 4px solid #6366f1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-section:hover {
+            background: rgba(30, 41, 59, 0.7);
+            border-left-color: #8b5cf6;
+            transform: translateX(5px);
+        }
+        
+        .insight-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        
+        .insight-section-icon {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+        
+        .insight-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c4b5fd;
+        }
+        
+        .insight-section-content {
+            color: #e2e8f0;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+        
+        .insight-section-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .insight-section-content ul li {
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        
+        .insight-section-content ul li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-custom {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+        }
+        
+        .btn-secondary-custom {
+            background: rgba(71, 85, 105, 0.5);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #e2e8f0;
+        }
+        
+        .btn-secondary-custom:hover {
+            background: rgba(71, 85, 105, 0.8);
+            color: white;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            color: #fca5a5;
+        }
+        
+        .error-message i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #ef4444;
+        }
+        
+        @media (max-width: 768px) {
+            .insight-metric-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/signals/dashboard/" class="back-button">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+        
+        {% if error %}
+        <div class="error-message">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <h3>{{ error }}</h3>
+            <p>Please check the URL or return to the dashboard.</p>
+        </div>
+        {% elif signal %}
+        
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-lightbulb-fill"></i>
+                <span>Insight Details: {{ signal.symbol }} #{{ signal.id }}</span>
+            </h1>
+            <div style="margin-top: 1rem; opacity: 0.9;">
+                <span style="margin-right: 1.5rem;">
+                    <i class="bi bi-clock"></i> {{ signal.received_at|date:"M d, Y H:i" }}
+                </span>
+                <span style="margin-right: 1.5rem;">
+                    <i class="bi bi-graph-up"></i> {{ signal.timeframe }}
+                </span>
+                <span>
+                    <i class="bi bi-tag"></i> {{ signal.regime }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Key Metrics Grid -->
+        <div class="insight-metric-grid">
+            <div class="insight-metric-card">
+                <div class="insight-metric-icon">🎯</div>
+                <div class="insight-metric-label">Confidence</div>
+                <div class="insight-metric-value">{{ signal.confidence|floatformat:0 }}%</div>
+            </div>
+            <div class="insight-metric-card">
+                <div class="insight-metric-icon">🧠</div>
+                <div class="insight-metric-label">Insight Index</div>
+                <div class="insight-metric-value">
+                    {% if signal.validation and signal.validation.quality_metrics.insight_index %}
+                        {{ signal.validation.quality_metrics.insight_index }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="insight-metric-card">
+                <div class="insight-metric-icon">⚡</div>
+                <div class="insight-metric-label">Truth Index</div>
+                <div class="insight-metric-value">
+                    {% if signal.validation %}
+                        {{ signal.validation.truth_index|floatformat:0 }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="insight-metric-card">
+                <div class="insight-metric-icon">✨</div>
+                <div class="insight-metric-label">Uniqueness</div>
+                <div class="insight-metric-value">
+                    {% if signal.validation and signal.validation.quality_metrics.linguistic_uniqueness %}
+                        {{ signal.validation.quality_metrics.linguistic_uniqueness }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Insight Explanation -->
+        <div class="insight-section">
+            <div class="insight-section-header">
+                <i class="bi bi-robot insight-section-icon"></i>
+                <span class="insight-section-title">AI Insight</span>
+            </div>
+            <div class="insight-section-content">
+                {% if signal.validation and signal.validation.context_summary %}
+                    {{ signal.validation.context_summary }}
+                {% else %}
+                    <em style="color: #94a3b8;">No AI-generated insight available for this opportunity.</em>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Reasoning Section -->
+        <div class="insight-section">
+            <div class="insight-section-header">
+                <i class="bi bi-lightbulb insight-section-icon"></i>
+                <span class="insight-section-title">Reasoning</span>
+            </div>
+            <div class="insight-section-content">
+                {% if signal.validation and signal.validation.reasoning %}
+                    {{ signal.validation.reasoning }}
+                {% else %}
+                    Market conditions at <strong>{{ signal.symbol }}</strong> on <strong>{{ signal.timeframe }}</strong> timeframe indicate 
+                    <strong style="color: {% if signal.side == 'buy' %}#10b981{% else %}#ef4444{% endif %};">{{ signal.side|upper }}</strong> opportunity.
+                    Regime classification: <strong style="color: #a78bfa;">{{ signal.regime }}</strong>.
+                    Session timing: <strong style="color: #fbbf24;">{{ signal.session|default:"N/A" }}</strong>.
+                    {% if signal.validation %}
+                        <br><br>
+                        Validation pipeline assigned <strong style="color: #6366f1;">{{ signal.validation.truth_index|floatformat:0 }}%</strong> truth index 
+                        based on multi-factor analysis including market structure, momentum, and volatility conditions.
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Observation Cue -->
+        <div class="insight-section">
+            <div class="insight-section-header">
+                <i class="bi bi-eye insight-section-icon"></i>
+                <span class="insight-section-title">Observation Cue</span>
+            </div>
+            <div class="insight-section-content">
+                Monitor <strong>{{ signal.symbol }}</strong> price action near <strong>{{ signal.price|default:"current levels" }}</strong>. 
+                Key observation points:
+                <ul style="margin-top: 1rem; line-height: 2;">
+                    <li>Watch for {% if signal.side == 'buy' %}bullish{% else %}bearish{% endif %} confirmation signals</li>
+                    <li>Validate {{ signal.regime }} regime continuation</li>
+                    <li>Monitor {{ signal.session|default:"session" }} liquidity patterns</li>
+                    <li>Observe {{ signal.timeframe }} structure integrity</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- News Context -->
+        <div class="insight-section">
+            <div class="insight-section-header">
+                <i class="bi bi-newspaper insight-section-icon"></i>
+                <span class="insight-section-title">News Context</span>
+            </div>
+            <div class="insight-section-content">
+                {% if signal.validation and signal.validation.quality_metrics and signal.validation.quality_metrics.news_context %}
+                    {{ signal.validation.quality_metrics.news_context }}
+                {% else %}
+                    <em style="color: #94a3b8;">No recent market news available for {{ signal.symbol }} in the last 12 hours.</em>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Suggestion -->
+        <div class="insight-section" style="border-left-color: #fbbf24;">
+            <div class="insight-section-header">
+                <i class="bi bi-star insight-section-icon" style="color: #fbbf24;"></i>
+                <span class="insight-section-title" style="color: #fbbf24;">Suggestion</span>
+            </div>
+            <div class="insight-section-content">
+                <strong>📌 Action Plan:</strong> Observe {{ signal.symbol }} reaction near {{ signal.price|default:"observation zone" }}. 
+                Market structure confirmation requires sustained {{ signal.timeframe }} momentum.
+                {% if signal.validation and signal.validation.get_key_factors %}
+                    <br><br>
+                    <strong>Key Factors to Watch:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        {% for factor in signal.validation.get_key_factors %}
+                        <li>{{ factor }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Validation Breakdown (if available) -->
+        {% if signal.validation and signal.validation.breakdown %}
+        <div class="insight-section" style="border-left-color: #10b981;">
+            <div class="insight-section-header">
+                <i class="bi bi-check-circle insight-section-icon" style="color: #10b981;"></i>
+                <span class="insight-section-title" style="color: #10b981;">Validation Breakdown</span>
+            </div>
+            <div class="insight-section-content">
+                <div class="row g-3">
+                    {% for key, value in signal.validation.breakdown.items %}
+                    <div class="col-md-6">
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 8px; border: 1px solid rgba(71, 85, 105, 0.5);">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;">{{ key|title|cut:"_" }}</div>
+                            {% widthratio value 1 100 as percentage %}
+                            <div style="font-size: 1.5rem; font-weight: 700; color: {% if percentage >= 80 %}#10b981{% elif percentage >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                {{ percentage }}%
+                            </div>
+                            <div style="height: 6px; background: rgba(51, 65, 85, 0.5); border-radius: 3px; margin-top: 0.5rem; overflow: hidden;">
+                                <div style="height: 100%; width: {{ percentage }}%; background: {% if percentage >= 80 %}#10b981{% elif percentage >= 60 %}#f59e0b{% else %}#ef4444{% endif %}; transition: width 0.5s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="/signals/dashboard/" class="btn-custom btn-secondary-custom">
+                <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+            </a>
+            <a href="{% url 'signals:trade_replay' signal.id %}" class="btn-custom btn-primary-custom">
+                <i class="bi bi-play-circle"></i> View Trade Replay
+            </a>
+        </div>
+        
+        {% endif %}
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

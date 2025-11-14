@@ -1,0 +1,73 @@
+{% extends 'admin_dashboard/base_module.html' %}
+
+{% block module_title %}ZenithMentor Profiles{% endblock %}
+
+{% block stats_cards %}
+<div class="col-md-6 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="stat-label">Total Apprentices</div>
+    </div>
+</div>
+<div class="col-md-6 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ active_count }}</div>
+        <div class="stat-label">Active Profiles</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block table_content %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Progress Level</th>
+            <th>Skills</th>
+            <th>Mentorship Hours</th>
+            <th>Status</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for profile in profiles %}
+        <tr>
+            <td>{{ profile.user.email }}</td>
+            <td>
+                {% if profile.progress_level %}
+                    {{ profile.progress_level }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if profile.skills_learned %}
+                    {{ profile.skills_learned|truncatechars:30 }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if profile.mentorship_hours %}
+                    {{ profile.mentorship_hours }}h
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if profile.is_active %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+            </td>
+            <td>{{ profile.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center text-muted">No apprentice profiles found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

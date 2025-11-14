@@ -1,0 +1,414 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge Overview - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .status-indicator {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(13, 110, 253, 0.5);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        .metric-label {
+            color: #adb5bd;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .positive {
+            color: #28a745;
+        }
+        .negative {
+            color: #dc3545;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        .checklist-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .checklist-item.passed {
+            border-left: 4px solid #28a745;
+        }
+        .checklist-item.failed {
+            border-left: 4px solid #dc3545;
+        }
+        .progress-bar-custom {
+            height: 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .badge-lg {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'signals:dashboard' %}">
+                <i class="bi bi-graph-up-arrow"></i> ZenithEdge
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signals:dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signals:journal_list' %}">
+                            <i class="bi bi-journal-text"></i> Journal
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-trophy-fill"></i> Challenge
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'signals:challenge_setup' %}"><i class="bi bi-gear"></i> Setup</a></li>
+                            <li><a class="dropdown-item active" href="{% url 'signals:challenge_overview' %}"><i class="bi bi-bar-chart"></i> Overview</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if challenge %}
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-4 text-white">
+                    <i class="bi bi-trophy-fill text-warning"></i>
+                    {{ challenge.get_firm_name_display }} Challenge
+                </h1>
+                <p class="lead text-muted">Account Size: ${{ challenge.account_size|floatformat:2 }}</p>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="glass-card mb-4">
+                <div class="status-indicator">
+                    {{ progress.get_status_indicator }}
+                </div>
+                <div class="text-center">
+                    {% if progress.status == 'active' %}
+                        <span class="badge bg-primary badge-lg">Active</span>
+                    {% elif progress.status == 'passed' %}
+                        <span class="badge bg-success badge-lg">Passed ✓</span>
+                    {% elif progress.status == 'failed' %}
+                        <span class="badge bg-danger badge-lg">Failed ✗</span>
+                    {% elif progress.status == 'paused' %}
+                        <span class="badge bg-warning badge-lg">Paused</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-label">Current Balance</div>
+                        <div class="metric-value {% if progress.total_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                            ${{ current_balance|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-label">Total P&L</div>
+                        <div class="metric-value {% if progress.total_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if progress.total_pnl >= 0 %}+{% endif %}${{ progress.total_pnl|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-label">Daily P&L</div>
+                        <div class="metric-value {% if progress.daily_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if progress.daily_pnl >= 0 %}+{% endif %}${{ progress.daily_pnl|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-label">Win Rate</div>
+                        <div class="metric-value">
+                            {{ win_rate|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="glass-card mb-4">
+                <h4 class="text-white mb-3"><i class="bi bi-bar-chart-fill"></i> Progress</h4>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Profit Target</span>
+                        <span class="{% if profit_progress >= 100 %}positive{% endif %}">
+                            {{ profit_progress|floatformat:1 }}% / 100%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success progress-bar-custom" 
+                             role="progressbar" 
+                             style="width: {{ profit_progress|floatformat:0 }}%">
+                            ${{ progress.total_pnl|floatformat:2 }} / ${{ challenge.get_profit_target_amount|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Daily Loss Remaining</span>
+                        <span class="{% if daily_loss_remaining < 20 %}warning{% else %}positive{% endif %}">
+                            ${{ daily_loss_remaining|floatformat:2 }} / ${{ challenge.get_max_daily_loss_amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if daily_loss_remaining < 20 %}bg-warning{% else %}bg-info{% endif %} progress-bar-custom" 
+                             role="progressbar" 
+                             style="width: {% widthratio daily_loss_remaining challenge.get_max_daily_loss_amount 100 %}%">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Overall Loss Remaining</span>
+                        <span class="{% if overall_loss_remaining < 20 %}warning{% else %}positive{% endif %}">
+                            ${{ overall_loss_remaining|floatformat:2 }} / ${{ challenge.get_max_overall_loss_amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if overall_loss_remaining < 20 %}bg-warning{% else %}bg-info{% endif %} progress-bar-custom" 
+                             role="progressbar" 
+                             style="width: {% widthratio overall_loss_remaining challenge.get_max_overall_loss_amount 100 %}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challenge Checklist -->
+            <div class="glass-card mb-4">
+                <h4 class="text-white mb-3"><i class="bi bi-check2-square"></i> Challenge Checklist</h4>
+                
+                <div class="checklist-item {% if checklist.daily_loss_ok %}passed{% else %}failed{% endif %}">
+                    <span>
+                        {% if checklist.daily_loss_ok %}
+                            <i class="bi bi-check-circle-fill positive"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill negative"></i>
+                        {% endif %}
+                        Daily Loss Within Limit
+                    </span>
+                    <span class="badge {% if checklist.daily_loss_ok %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if checklist.daily_loss_ok %}OK{% else %}VIOLATED{% endif %}
+                    </span>
+                </div>
+
+                <div class="checklist-item {% if checklist.overall_loss_ok %}passed{% else %}failed{% endif %}">
+                    <span>
+                        {% if checklist.overall_loss_ok %}
+                            <i class="bi bi-check-circle-fill positive"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill negative"></i>
+                        {% endif %}
+                        Overall Loss Within Limit
+                    </span>
+                    <span class="badge {% if checklist.overall_loss_ok %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if checklist.overall_loss_ok %}OK{% else %}VIOLATED{% endif %}
+                    </span>
+                </div>
+
+                <div class="checklist-item {% if checklist.profit_target_met %}passed{% else %}failed{% endif %}">
+                    <span>
+                        {% if checklist.profit_target_met %}
+                            <i class="bi bi-check-circle-fill positive"></i>
+                        {% else %}
+                            <i class="bi bi-circle"></i>
+                        {% endif %}
+                        Profit Target Met
+                    </span>
+                    <span class="badge {% if checklist.profit_target_met %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if checklist.profit_target_met %}ACHIEVED{% else %}PENDING{% endif %}
+                    </span>
+                </div>
+
+                <div class="checklist-item {% if checklist.min_days_met %}passed{% else %}failed{% endif %}">
+                    <span>
+                        {% if checklist.min_days_met %}
+                            <i class="bi bi-check-circle-fill positive"></i>
+                        {% else %}
+                            <i class="bi bi-circle"></i>
+                        {% endif %}
+                        Minimum Trading Days ({{ progress.trading_days }} / {{ challenge.min_trading_days }})
+                    </span>
+                    <span class="badge {% if checklist.min_days_met %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if checklist.min_days_met %}COMPLETE{% else %}{{ challenge.min_trading_days|add:"-"|add:progress.trading_days }} DAYS LEFT{% endif %}
+                    </span>
+                </div>
+
+                <div class="checklist-item {% if checklist.no_violations %}passed{% else %}failed{% endif %}">
+                    <span>
+                        {% if checklist.no_violations %}
+                            <i class="bi bi-check-circle-fill positive"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill negative"></i>
+                        {% endif %}
+                        No Rule Violations
+                    </span>
+                    <span class="badge {% if checklist.no_violations %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if checklist.no_violations %}CLEAN{% else %}{{ progress.daily_loss_violations|add:progress.overall_loss_violations|add:progress.news_blackout_violations }} VIOLATIONS{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Trading Statistics -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <h5 class="text-white mb-3"><i class="bi bi-graph-up"></i> Trading Statistics</h5>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="metric-label">Total Trades</div>
+                                <div class="metric-value" style="font-size: 1.5rem;">{{ progress.total_trades }}</div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="metric-label">Trading Days</div>
+                                <div class="metric-value" style="font-size: 1.5rem;">{{ progress.trading_days }}</div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="metric-label">Winning Trades</div>
+                                <div class="metric-value positive" style="font-size: 1.5rem;">{{ progress.winning_trades }}</div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="metric-label">Losing Trades</div>
+                                <div class="metric-value negative" style="font-size: 1.5rem;">{{ progress.losing_trades }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <h5 class="text-white mb-3"><i class="bi bi-exclamation-triangle"></i> Violations</h5>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="metric-label">Daily Loss Violations</div>
+                                <div class="metric-value {% if progress.daily_loss_violations > 0 %}negative{% endif %}" style="font-size: 1.5rem;">
+                                    {{ progress.daily_loss_violations }}
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <div class="metric-label">Overall Loss Violations</div>
+                                <div class="metric-value {% if progress.overall_loss_violations > 0 %}negative{% endif %}" style="font-size: 1.5rem;">
+                                    {{ progress.overall_loss_violations }}
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <div class="metric-label">News Blackout Violations</div>
+                                <div class="metric-value {% if progress.news_blackout_violations > 0 %}negative{% endif %}" style="font-size: 1.5rem;">
+                                    {{ progress.news_blackout_violations }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challenge Details -->
+            <div class="glass-card mb-4">
+                <h5 class="text-white mb-3"><i class="bi bi-info-circle"></i> Challenge Rules</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong>Profit Target:</strong> {{ challenge.profit_target_pct }}%</li>
+                            <li class="mb-2"><strong>Max Daily Loss:</strong> {{ challenge.max_daily_loss_pct }}%</li>
+                            <li class="mb-2"><strong>Max Overall Loss:</strong> {{ challenge.max_overall_loss_pct }}%</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong>Minimum Trading Days:</strong> {{ challenge.min_trading_days }}</li>
+                            <li class="mb-2"><strong>News Blackout:</strong> {{ challenge.news_blackout_minutes }} minutes</li>
+                            <li class="mb-2"><strong>Max Leverage:</strong> {{ challenge.leverage }}:1</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- No Active Challenge -->
+            <div class="text-center py-5">
+                <div class="glass-card">
+                    <i class="bi bi-trophy" style="font-size: 5rem; color: #6c757d;"></i>
+                    <h2 class="text-white mt-4">No Active Challenge</h2>
+                    <p class="text-muted mb-4">You don't have an active prop firm challenge yet. Set one up to start tracking your progress!</p>
+                    <a href="{% url 'signals:challenge_setup' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-gear"></i> Setup Challenge
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% include "bot/chat_widget.html" %}
+</body>
+</html>

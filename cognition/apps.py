@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class CognitionConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'cognition'
+    verbose_name = 'Cognitive Intelligence'

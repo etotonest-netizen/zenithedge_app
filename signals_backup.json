@@ -1,0 +1,90 @@
+[
+{
+  "model": "signals.signal",
+  "pk": 1,
+  "fields": {
+    "symbol": "BTCUSDT",
+    "timeframe": "1h",
+    "side": "buy",
+    "sl": "50000.50000000",
+    "tp": "52000.00000000",
+    "confidence": 85.5,
+    "strategy": "ZenithEdge",
+    "regime": "Trend",
+    "price": "51000.00000000",
+    "timestamp": null,
+    "received_at": "2025-11-09T02:47:24.911Z",
+    "updated_at": "2025-11-09T02:47:24.911Z",
+    "user": null,
+    "is_allowed": true,
+    "rejection_reason": "No active prop rules configured",
+    "prop_rule_checked": null
+  }
+},
+{
+  "model": "signals.signal",
+  "pk": 2,
+  "fields": {
+    "symbol": "ETHUSDT",
+    "timeframe": "4h",
+    "side": "sell",
+    "sl": "2150.00000000",
+    "tp": "2050.00000000",
+    "confidence": 78.3,
+    "strategy": "ZenithEdge",
+    "regime": "Breakout",
+    "price": "2100.00000000",
+    "timestamp": null,
+    "received_at": "2025-11-09T02:47:43.753Z",
+    "updated_at": "2025-11-09T02:47:43.753Z",
+    "user": null,
+    "is_allowed": true,
+    "rejection_reason": "No active prop rules configured",
+    "prop_rule_checked": null
+  }
+},
+{
+  "model": "signals.signal",
+  "pk": 3,
+  "fields": {
+    "symbol": "BTCUSDT",
+    "timeframe": "15m",
+    "side": "buy",
+    "sl": "49800.00000000",
+    "tp": "51200.00000000",
+    "confidence": 92.1,
+    "strategy": "ZenithEdge",
+    "regime": "Squeeze",
+    "price": "50500.00000000",
+    "timestamp": null,
+    "received_at": "2025-11-09T02:47:43.868Z",
+    "updated_at": "2025-11-09T02:47:43.868Z",
+    "user": null,
+    "is_allowed": true,
+    "rejection_reason": "No active prop rules configured",
+    "prop_rule_checked": null
+  }
+},
+{
+  "model": "signals.signal",
+  "pk": 4,
+  "fields": {
+    "symbol": "SOLUSDT",
+    "timeframe": "1h",
+    "side": "sell",
+    "sl": "125.50000000",
+    "tp": "118.20000000",
+    "confidence": 65.7,
+    "strategy": "ZenithEdge",
+    "regime": "MeanReversion",
+    "price": "121.85000000",
+    "timestamp": null,
+    "received_at": "2025-11-09T02:47:43.909Z",
+    "updated_at": "2025-11-09T02:47:43.909Z",
+    "user": null,
+    "is_allowed": true,
+    "rejection_reason": "No active prop rules configured",
+    "prop_rule_checked": null
+  }
+}
+]

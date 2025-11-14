@@ -1,0 +1,49 @@
+# ZenithEdge Intelligence Console - Files Changed
+
+## NEW FILES CREATED (6 files)
+
+signals/
+├── api_insights.py (280 lines) - REST API endpoints for market insights
+├── api_urls.py (25 lines) - URL routing for insights API
+├── insight_converter.py (200 lines) - Signal → MarketInsight conversion utilities
+├── insights_views.py (70 lines) - Django view for Intelligence Console
+├── migrations/
+│   └── 0014_add_market_insight_model.py (80 lines) - MarketInsight table migration
+└── templates/
+    └── signals/
+        └── insights_dashboard.html (370 lines) - Intelligence Console UI
+
+## MODIFIED FILES (12+ files)
+
+signals/
+├── models.py (+220 lines) - Added MarketInsight model class
+├── admin.py (+160 lines) - Added MarketInsightAdmin class
+├── urls.py (+1 line) - Added insights_dashboard route
+└── templates/
+    ├── signals/
+    │   ├── dashboard.html (~30 replacements) - Terminology updated
+    │   └── trade_replay.html (~15 replacements) - Terminology updated
+
+zenbot/
+└── contextualizer.py (+165 lines) - Added 10 new narrative generation methods
+
+zenithedge/
+└── urls.py (+1 line) - Added /api/insights/ route
+
+Documentation/
+├── README.md (updated) - Rebranded to Intelligence Console
+├── QUICK_REFERENCE.md (updated) - Added new URLs
+├── DASHBOARD_GUIDE.md (updated) - Intelligence Console features
+├── SYSTEM_SUMMARY.md (updated) - Rebranded overview
+├── ZENITHEDGE_FEATURE_OVERVIEW.md (updated) - Intelligence features
+├── SIGNAL_TO_INSIGHT_MIGRATION.md (updated) - Completion status
+├── MIGRATION_COMPLETE_v1.md (NEW) - Technical verification report
+└── DEPLOYMENT_READY.md (NEW) - Quick deployment guide
+
+## STATISTICS
+
+Total Lines Added: 1,200+
+Total Files Created: 8 files
+Total Files Modified: 12+ files
+Total Replacements: 60+ terminology changes
+Total CSS Classes Renamed: 15+ classes

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trading Engine Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">⚡ Trading Engine</h1>
+            <p class="lead">Advanced market analysis and backtesting platform</p>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Backtests</h5>
+                    <h2>{{ total_backtests }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <h2>{{ completed_backtests }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Market Bars</h5>
+                    <h2>{{ market_bars_count|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Endpoints -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📡 API Endpoints</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Engine Status:</strong> 
+                            <code>GET /engine/api/status/</code>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Latest Visuals:</strong> 
+                            <code>GET /engine/api/visuals/latest/?symbol=EURUSD</code>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Signal Visuals:</strong> 
+                            <code>GET /engine/api/visuals/{signal_id}/</code>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Trigger Detection:</strong> 
+                            <code>POST /engine/api/detect/</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🔗 Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'admin:engine_backtestrun_changelist' %}" class="btn btn-outline-primary">
+                        View Backtests
+                    </a>
+                    <a href="{% url 'admin:engine_marketbar_changelist' %}" class="btn btn-outline-info">
+                        View Market Data
+                    </a>
+                    <a href="/engine/api/status/" class="btn btn-outline-success">
+                        API Status
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,419 @@
+// @version=5
+// ================================================================
+// ZENITH MARKET ANALYST - VISUAL INSIGHTS MODE
+// TradingView Pine Script Template with Webhook Integration
+// ================================================================
+// 
+// Purpose: Output structured metadata on EVERY bar to power
+//          real-time AI insights in your Django dashboard
+//
+// Setup:
+//   1. Copy this code to TradingView Pine Editor
+//   2. Add to chart
+//   3. Configure Alert → Webhook URL:
+//      https://YOUR_DOMAIN.com/autopsy/api/submit-insight/
+//   4. Alert message: {{strategy.order.alert_message}}
+//   5. Set to: Once Per Bar Close
+// ================================================================
+
+indicator("Zenith Market Analyst - Visual Insights", overlay=true, max_labels_count=500)
+
+// ================================================================
+// CONFIGURATION
+// ================================================================
+
+// Webhook URL (configure in alert settings)
+WEBHOOK_URL = "http://YOUR_DOMAIN.com/autopsy/api/submit-insight/"
+
+// Visual settings
+show_labels = input.bool(true, "Show Chart Labels", group="Visual")
+label_size = input.string("small", "Label Size", options=["tiny", "small", "normal", "large"], group="Visual")
+
+// Detection parameters
+lookback = input.int(20, "Lookback Period", minval=5, maxval=100, group="Detection")
+atr_period = input.int(14, "ATR Period", minval=5, maxval=50, group="Detection")
+volume_ma_period = input.int(20, "Volume MA Period", minval=5, maxval=100, group="Detection")
+
+// ================================================================
+// MARKET REGIME DETECTION
+// ================================================================
+
+detect_regime() =>
+    // Calculate indicators for regime classification
+    ema_fast = ta.ema(close, 8)
+    ema_slow = ta.ema(close, 21)
+    atr = ta.atr(atr_period)
+    atr_pct = (atr / close) * 100
+    
+    // Trend strength (difference between EMAs)
+    trend_strength = math.abs(ema_fast - ema_slow) / close * 100
+    
+    // Directional movement
+    is_uptrend = ema_fast > ema_slow
+    is_downtrend = ema_fast < ema_slow
+    
+    // Regime classification
+    regime = "ranging"
+    
+    if trend_strength > 0.5 and atr_pct < 1.5
+        regime := is_uptrend ? "trending" : "trending"
+    else if trend_strength < 0.2 and atr_pct < 1.0
+        regime := "consolidation"
+    else if atr_pct > 2.0
+        regime := "volatile"
+    else
+        regime := "ranging"
+    
+    regime
+
+// ================================================================
+// MARKET STRUCTURE DETECTION
+// ================================================================
+
+detect_structure() =>
+    // Detect key market structure events
+    structure = "none"
+    
+    // Higher High / Lower Low detection
+    pivot_high = ta.pivothigh(high, lookback/2, lookback/2)
+    pivot_low = ta.pivotlow(low, lookback/2, lookback/2)
+    
+    // Previous pivots
+    prev_high = ta.valuewhen(pivot_high, high, 1)
+    prev_low = ta.valuewhen(pivot_low, low, 1)
+    
+    // Break of Structure (BOS)
+    if not na(pivot_high) and high > prev_high
+        structure := "bos"
+    else if not na(pivot_low) and low < prev_low
+        structure := "bos"
+    
+    // Change of Character (CHoCH)
+    else if close[1] > ta.sma(close, 20) and close < ta.sma(close, 20)
+        structure := "choch"
+    else if close[1] < ta.sma(close, 20) and close > ta.sma(close, 20)
+        structure := "choch"
+    
+    // Pullback
+    else if close < ta.ema(close, 8) and close > ta.ema(close, 21)
+        structure := "pullback"
+    else if close > ta.ema(close, 8) and close < ta.ema(close, 21)
+        structure := "pullback"
+    
+    // Order Block (recent rejection zone)
+    else if high == ta.highest(high, 5) and close < open
+        structure := "order_block"
+    else if low == ta.lowest(low, 5) and close > open
+        structure := "order_block"
+    
+    // Liquidity Sweep (stop hunt)
+    else if high > ta.highest(high[1], lookback)[1] and close < high
+        structure := "liquidity_sweep"
+    else if low < ta.lowest(low[1], lookback)[1] and close > low
+        structure := "liquidity_sweep"
+    
+    // Fair Value Gap (FVG)
+    else if low > high[2]
+        structure := "fvg"
+    else if high < low[2]
+        structure := "fvg"
+    
+    structure
+
+// ================================================================
+// MOMENTUM DETECTION
+// ================================================================
+
+detect_momentum() =>
+    // RSI-based momentum
+    rsi = ta.rsi(close, 14)
+    rsi_ma = ta.sma(rsi, 14)
+    
+    // MACD
+    [macd_line, signal_line, _] = ta.macd(close, 12, 26, 9)
+    
+    momentum = "neutral"
+    
+    if rsi > rsi_ma and macd_line > signal_line and macd_line > macd_line[1]
+        momentum := "increasing"
+    else if rsi < rsi_ma and macd_line < signal_line and macd_line < macd_line[1]
+        momentum := "decreasing"
+    else if (rsi > 70 and close < close[1]) or (rsi < 30 and close > close[1])
+        momentum := "diverging"
+    else
+        momentum := "neutral"
+    
+    momentum
+
+// ================================================================
+// VOLUME ANALYSIS
+// ================================================================
+
+analyze_volume() =>
+    vol_ma = ta.sma(volume, volume_ma_period)
+    vol_ratio = volume / vol_ma
+    
+    volume_state = "normal"
+    
+    if vol_ratio > 2.0
+        volume_state := "spike"
+    else if vol_ratio < 0.5
+        volume_state := "low"
+    else if volume > volume[1] and volume[1] > volume[2]
+        volume_state := "increasing"
+    else if volume < volume[1] and volume[1] < volume[2]
+        volume_state := "decreasing"
+    else
+        volume_state := "normal"
+    
+    volume_state
+
+// ================================================================
+// SESSION DETECTION
+// ================================================================
+
+detect_session() =>
+    // Get current hour in UTC
+    current_hour = hour(time, "UTC")
+    
+    session = "off"
+    
+    // London: 08:00-16:00 UTC
+    if current_hour >= 8 and current_hour < 16
+        session := "london"
+    
+    // New York: 13:00-21:00 UTC
+    if current_hour >= 13 and current_hour < 21
+        if session == "london"
+            session := "overlap"  // London-NY overlap
+        else
+            session := "newyork"
+    
+    // Asia: 00:00-08:00 UTC
+    if current_hour >= 0 and current_hour < 8
+        session := "asia"
+    
+    session
+
+// ================================================================
+// EXPECTED BEHAVIOR
+// ================================================================
+
+calculate_expected_behavior(regime, structure, momentum) =>
+    expected = "continuation"
+    
+    // Trending regimes
+    if regime == "trending"
+        if structure == "bos" or structure == "pullback"
+            expected := "continuation"
+        else if structure == "choch"
+            expected := "reversal"
+        else
+            expected := "continuation"
+    
+    // Ranging regimes
+    else if regime == "ranging" or regime == "consolidation"
+        if structure == "liquidity_sweep"
+            expected := "reversal"
+        else
+            expected := "consolidation"
+    
+    // Volatile regimes
+    else if regime == "volatile"
+        expected := "consolidation"
+    
+    expected
+
+// ================================================================
+// STRENGTH CALCULATION
+// ================================================================
+
+calculate_strength(regime, structure, momentum, volume_state, session) =>
+    strength = 50  // Base strength
+    
+    // Regime bonuses
+    if regime == "trending"
+        strength += 15
+    else if regime == "consolidation"
+        strength += 5
+    else if regime == "volatile"
+        strength -= 10
+    
+    // Structure bonuses
+    if structure == "bos"
+        strength += 20
+    else if structure == "choch"
+        strength += 15
+    else if structure == "order_block"
+        strength += 10
+    else if structure == "liquidity_sweep"
+        strength += 10
+    
+    // Momentum bonuses
+    if momentum == "increasing" or momentum == "decreasing"
+        strength += 10
+    else if momentum == "diverging"
+        strength += 15
+    
+    // Volume bonuses
+    if volume_state == "spike"
+        strength += 15
+    else if volume_state == "increasing"
+        strength += 10
+    else if volume_state == "low"
+        strength -= 10
+    
+    // Session bonuses
+    if session == "newyork"
+        strength += 10
+    else if session == "london"
+        strength += 8
+    else if session == "overlap"
+        strength += 15
+    else if session == "asia"
+        strength -= 5
+    
+    // Clamp between 0-100
+    math.max(0, math.min(100, strength))
+
+// ================================================================
+// MAIN PROCESSING
+// ================================================================
+
+// Detect all market conditions
+regime = detect_regime()
+structure = detect_structure()
+momentum = detect_momentum()
+volume_state = analyze_volume()
+session = detect_session()
+expected_behavior = calculate_expected_behavior(regime, structure, momentum)
+strength = calculate_strength(regime, structure, momentum, volume_state, session)
+
+// ================================================================
+// CHART LABELS (Visual Feedback)
+// ================================================================
+
+if show_labels and barstate.isconfirmed
+    // Structure label
+    if structure != "none"
+        label_text = str.upper(structure)
+        label_color = structure == "bos" ? color.new(color.purple, 20) : 
+                     structure == "choch" ? color.new(color.orange, 20) :
+                     structure == "order_block" ? color.new(color.blue, 20) :
+                     structure == "liquidity_sweep" ? color.new(color.red, 20) :
+                     color.new(color.gray, 20)
+        
+        label.new(bar_index, high, label_text, 
+                 color=label_color, 
+                 textcolor=color.white,
+                 style=label.style_label_down,
+                 size=label_size)
+    
+    // Regime indicator
+    regime_emoji = regime == "trending" ? "📈" : 
+                   regime == "ranging" ? "↔️" : 
+                   regime == "volatile" ? "⚡" : "📊"
+    
+    label.new(bar_index, low, regime_emoji, 
+             color=color.new(color.blue, 80),
+             textcolor=color.blue,
+             style=label.style_label_up,
+             size=label_size)
+
+// ================================================================
+// WEBHOOK PAYLOAD GENERATION
+// ================================================================
+
+// Build JSON payload for Django webhook
+build_webhook_payload() =>
+    payload = '{'
+    payload += '"symbol":"' + syminfo.ticker + '",'
+    payload += '"timeframe":"' + timeframe.period + '",'
+    payload += '"timestamp":"' + str.format("{0,date,yyyy-MM-dd}T{0,time,HH:mm:ss}", timenow) + '",'
+    payload += '"regime":"' + regime + '",'
+    payload += '"structure":"' + structure + '",'
+    payload += '"momentum":"' + momentum + '",'
+    payload += '"volume_state":"' + volume_state + '",'
+    payload += '"session":"' + session + '",'
+    payload += '"expected_behavior":"' + expected_behavior + '",'
+    payload += '"strength":' + str.tostring(math.round(strength)) + ','
+    payload += '"metadata":{'
+    payload += '"liquidity_state":"building",'
+    payload += '"chart_labels":{'
+    payload += '"structure":"' + str.upper(structure) + '",'
+    payload += '"regime":"' + regime + '",'
+    payload += '"momentum":"' + momentum + '",'
+    payload += '"volume":"' + volume_state + '"'
+    payload += '}'
+    payload += '}'
+    payload += '}'
+    payload
+
+// Generate payload
+webhook_payload = build_webhook_payload()
+
+// ================================================================
+// ALERT CONFIGURATION
+// ================================================================
+
+// Trigger alert on every bar close (this sends to webhook)
+if barstate.isconfirmed
+    alert(webhook_payload, alert.freq_once_per_bar_close)
+
+// ================================================================
+// PLOTTING (Optional - for debugging)
+// ================================================================
+
+// Plot strength as histogram at bottom
+hline(50, "Neutral", color=color.gray, linestyle=hline.style_dotted)
+plot(strength, "Strength", color=color.new(color.blue, 50), style=plot.style_histogram)
+
+// ================================================================
+// TABLE DISPLAY (Current Status)
+// ================================================================
+
+var table status_table = table.new(position.top_right, 2, 8, bgcolor=color.new(color.black, 85), border_width=1)
+
+if barstate.islast
+    table.cell(status_table, 0, 0, "📊 Market Status", bgcolor=color.new(color.blue, 80), text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 0, "", bgcolor=color.new(color.blue, 80))
+    
+    table.cell(status_table, 0, 1, "Symbol", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 1, syminfo.ticker, text_size=size.small, text_color=color.yellow)
+    
+    table.cell(status_table, 0, 2, "Regime", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 2, regime, text_size=size.small, text_color=color.lime)
+    
+    table.cell(status_table, 0, 3, "Structure", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 3, structure, text_size=size.small, text_color=color.orange)
+    
+    table.cell(status_table, 0, 4, "Momentum", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 4, momentum, text_size=size.small, text_color=color.aqua)
+    
+    table.cell(status_table, 0, 5, "Volume", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 5, volume_state, text_size=size.small, text_color=color.fuchsia)
+    
+    table.cell(status_table, 0, 6, "Session", text_size=size.small, text_color=color.white)
+    table.cell(status_table, 1, 6, session, text_size=size.small, text_color=color.white)
+    
+    table.cell(status_table, 0, 7, "Strength", text_size=size.small, text_color=color.white)
+    strength_color = strength >= 70 ? color.lime : strength >= 50 ? color.yellow : color.red
+    table.cell(status_table, 1, 7, str.tostring(math.round(strength)) + "/100", text_size=size.small, text_color=strength_color)
+
+// ================================================================
+// END OF SCRIPT
+// ================================================================
+
+// USAGE INSTRUCTIONS:
+// 1. Add this indicator to your TradingView chart
+// 2. Click "Create Alert" button
+// 3. Condition: "Zenith Market Analyst - Visual Insights"
+// 4. Alert actions: Webhook URL
+// 5. Webhook URL: https://YOUR_DOMAIN.com/autopsy/api/submit-insight/
+// 6. Message: {{strategy.order.alert_message}}
+// 7. Frequency: Once Per Bar Close
+// 8. Expiration: Open-ended
+// 9. Click "Create"
+//
+// The indicator will now send structured JSON to your Django
+// backend on every bar close, powering real-time AI insights!

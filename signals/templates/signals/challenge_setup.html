@@ -1,0 +1,298 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prop Challenge Setup - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(15, 20, 25, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card {
+            background: rgba(26, 31, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .firm-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .firm-card:hover {
+            border-color: #0d6efd;
+            transform: translateY(-5px);
+        }
+        .firm-card.selected {
+            border-color: #0d6efd;
+            background: rgba(13, 110, 253, 0.1);
+        }
+        .preset-badge {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'signals:home' %}">
+                <i class="bi bi-graph-up-arrow"></i> ZenithEdge
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signals:dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signals:journal_list' %}">
+                            <i class="bi bi-journal-text"></i> Journal
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-trophy-fill"></i> Challenge
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item active" href="{% url 'signals:challenge_setup' %}"><i class="bi bi-gear"></i> Setup</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signals:challenge_overview' %}"><i class="bi bi-bar-chart"></i> Overview</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-5 fw-bold text-white mb-2">
+                    <i class="bi bi-trophy text-warning"></i> Prop Challenge Setup
+                </h1>
+                <p class="text-secondary">Configure your prop firm challenge rules and start tracking your progress</p>
+            </div>
+        </div>
+
+        {% if has_active_challenge %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> You already have an active challenge. Creating a new one will deactivate the current challenge.
+        </div>
+        {% endif %}
+
+        <!-- Firm Selection -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title mb-4"><i class="bi bi-building"></i> Select Prop Firm</h4>
+                <div class="row g-3" id="firmSelection">
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="ftmo">
+                            <h5 class="mb-2">FTMO</h5>
+                            <span class="preset-badge">✓ Preset Available</span>
+                            <p class="text-muted small mt-2 mb-0">Popular prop firm with standard rules</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="funding_pips">
+                            <h5 class="mb-2">Funding Pips</h5>
+                            <span class="preset-badge">✓ Preset Available</span>
+                            <p class="text-muted small mt-2 mb-0">Stricter daily loss limits</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="myforexfunds">
+                            <h5 class="mb-2">MyForexFunds</h5>
+                            <span class="preset-badge">✓ Preset Available</span>
+                            <p class="text-muted small mt-2 mb-0">Flexible minimum trading days</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="the5ers">
+                            <h5 class="mb-2">The5%ers</h5>
+                            <span class="preset-badge">✓ Preset Available</span>
+                            <p class="text-muted small mt-2 mb-0">Lower profit target (6%)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="topstep">
+                            <h5 class="mb-2">TopStep</h5>
+                            <span class="preset-badge">✓ Preset Available</span>
+                            <p class="text-muted small mt-2 mb-0">Tight risk limits (2% daily)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="firm-card card p-3" data-firm="custom">
+                            <h5 class="mb-2">Custom</h5>
+                            <span class="badge bg-secondary">Manual Setup</span>
+                            <p class="text-muted small mt-2 mb-0">Define your own rules</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Configuration Form -->
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4"><i class="bi bi-sliders"></i> Challenge Configuration</h4>
+                <form id="challengeForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Account Size ($)</label>
+                            <input type="number" class="form-control" id="accountSize" value="10000" min="1000" step="1000" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Profit Target (%)</label>
+                            <input type="number" class="form-control" id="profitTarget" value="10.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Max Daily Loss (%)</label>
+                            <input type="number" class="form-control" id="maxDailyLoss" value="5.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Max Overall Loss (%)</label>
+                            <input type="number" class="form-control" id="maxOverallLoss" value="10.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Min Trading Days</label>
+                            <input type="number" class="form-control" id="minTradingDays" value="5" min="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">News Blackout (minutes)</label>
+                            <input type="number" class="form-control" id="newsBlackout" value="2" min="0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Max Leverage</label>
+                            <input type="number" class="form-control" id="leverage" value="100" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Create Challenge
+                        </button>
+                        {% if has_active_challenge %}
+                        <button type="button" class="btn btn-danger btn-lg ms-2" id="deactivateBtn">
+                            <i class="bi bi-x-circle"></i> Deactivate Current Challenge
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const firmPresets = {{ firm_presets|safe }};
+        let selectedFirm = 'ftmo';
+
+        // Firm selection
+        document.querySelectorAll('.firm-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.firm-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedFirm = this.dataset.firm;
+                
+                // Load preset if available
+                if (selectedFirm !== 'custom' && firmPresets[selectedFirm]) {
+                    loadPreset(firmPresets[selectedFirm]);
+                }
+            });
+        });
+
+        // Select FTMO by default
+        document.querySelector('[data-firm="ftmo"]').click();
+
+        function loadPreset(preset) {
+            document.getElementById('maxDailyLoss').value = preset.max_daily_loss_pct;
+            document.getElementById('maxOverallLoss').value = preset.max_overall_loss_pct;
+            document.getElementById('minTradingDays').value = preset.min_trading_days;
+            document.getElementById('profitTarget').value = preset.profit_target_pct;
+            document.getElementById('newsBlackout').value = preset.news_blackout_minutes;
+            document.getElementById('leverage').value = preset.leverage;
+        }
+
+        // Form submission
+        document.getElementById('challengeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                action: 'create',
+                firm_name: selectedFirm,
+                account_size: document.getElementById('accountSize').value,
+                max_daily_loss_pct: document.getElementById('maxDailyLoss').value,
+                max_overall_loss_pct: document.getElementById('maxOverallLoss').value,
+                min_trading_days: document.getElementById('minTradingDays').value,
+                profit_target_pct: document.getElementById('profitTarget').value,
+                news_blackout_minutes: document.getElementById('newsBlackout').value,
+                leverage: document.getElementById('leverage').value,
+            };
+
+            try {
+                const response = await fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    alert(result.message);
+                    window.location.href = '{% url "signals:challenge_overview" %}';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error creating challenge: ' + error);
+            }
+        });
+
+        // Deactivate button
+        {% if has_active_challenge %}
+        document.getElementById('deactivateBtn').addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to deactivate the current challenge?')) return;
+
+            try {
+                const response = await fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({action: 'deactivate'})
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(result.message);
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        });
+        {% endif %}
+    </script>
+    {% include "bot/chat_widget.html" %}
+</body>
+</html>

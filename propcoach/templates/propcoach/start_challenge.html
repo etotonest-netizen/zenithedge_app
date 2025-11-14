@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start New Challenge | PropCoach</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-bottom: 2px solid #3b82f6;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24 !important;
+        }
+        .container {
+            max-width: 1200px;
+            margin-top: 30px;
+        }
+        .firm-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .firm-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #fbbf24;
+        }
+        .template-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+            border-color: #fbbf24;
+            box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);
+        }
+        .template-card.selected {
+            border-color: #fbbf24;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+        }
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .template-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .phase-badge {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .template-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .detail-value {
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .start-button {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .start-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4);
+        }
+        .start-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .page-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .alert-info {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/propcoach/">
+                <i class="bi bi-trophy-fill"></i> PropCoach
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/signals/">
+                            <i class="bi bi-speedometer2"></i> Main Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/propcoach/">
+                            <i class="bi bi-trophy"></i> PropCoach Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/logout/">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🎯 Start New Prop Challenge</h1>
+            <p>Select a firm template to begin your funded trader journey</p>
+        </div>
+
+        <div class="alert-info">
+            <i class="bi bi-info-circle-fill"></i>
+            <strong>Note:</strong> You can only have one active challenge at a time. Complete or abandon your current challenge before starting a new one.
+        </div>
+
+        <form id="startChallengeForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="template_id" id="selectedTemplateId">
+
+            {% for firm_name, templates in firms.items %}
+            <div class="firm-section">
+                <div class="firm-title">
+                    <i class="bi bi-building"></i> {{ firm_name }}
+                </div>
+
+                <div class="row">
+                    {% for template in templates %}
+                    <div class="col-md-6">
+                        <div class="template-card" data-template-id="{{ template.id }}" onclick="selectTemplate('{{ template.id }}')">
+                            <div class="template-header">
+                                <div class="template-name">{{ template.template_name }}</div>
+                                <div class="phase-badge">Phase {{ template.phase }}</div>
+                            </div>
+
+                            <div class="template-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Account Size:</span>
+                                    <span class="detail-value">${{ template.account_size|floatformat:0 }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Profit Target:</span>
+                                    <span class="detail-value" style="color: #10b981;">${{ template.profit_target|floatformat:0 }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Max Daily Loss:</span>
+                                    <span class="detail-value" style="color: #ef4444;">${{ template.max_daily_loss|floatformat:0 }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Max Total Loss:</span>
+                                    <span class="detail-value" style="color: #ef4444;">${{ template.max_total_drawdown|floatformat:0 }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Duration:</span>
+                                    <span class="detail-value">{{ template.max_trading_days }} days</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Min Trading Days:</span>
+                                    <span class="detail-value">{{ template.min_trading_days }} days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="text-center">
+                <button type="submit" class="start-button" id="startButton" disabled>
+                    <i class="bi bi-play-circle-fill"></i> Start Challenge
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedTemplateId = null;
+
+        function selectTemplate(templateId) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to clicked card
+            const selectedCard = document.querySelector(`[data-template-id="${templateId}"]`);
+            selectedCard.classList.add('selected');
+
+            // Update hidden input and button
+            selectedTemplateId = templateId;
+            document.getElementById('selectedTemplateId').value = templateId;
+            document.getElementById('startButton').disabled = false;
+        }
+
+        // Handle form submission
+        document.getElementById('startChallengeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!selectedTemplateId) {
+                alert('Please select a challenge template first.');
+                return;
+            }
+
+            const button = document.getElementById('startButton');
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating Challenge...';
+
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/propcoach/start/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to challenge detail or dashboard
+                    window.location.href = data.redirect_url || '/propcoach/';
+                } else {
+                    alert(data.error || 'Failed to create challenge. Please try again.');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-play-circle-fill"></i> Start Challenge';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-play-circle-fill"></i> Start Challenge';
+            }
+        });
+    </script>
+</body>
+</html>

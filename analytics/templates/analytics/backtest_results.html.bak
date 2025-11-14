@@ -1,0 +1,456 @@
+{% extends "signals/base.html" %}
+{% load static %}
+
+{% block title %}Backtest Results - ZenithEdge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-container {
+        background: linear-gradient(135deg, #1a1c2e 0%, #0f1119 100%);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    .stat-label {
+        color: #00d4ff;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .chart-container {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .trade-table {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .trade-table th {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00d4ff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    .trade-table td {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    .trade-win {
+        background: rgba(40, 167, 69, 0.1);
+    }
+    .trade-loss {
+        background: rgba(220, 53, 69, 0.1);
+    }
+    .btn-action {
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        border-radius: 5px;
+        transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">
+                <i class="bi bi-graph-up"></i> Backtest Results
+            </h1>
+            <p class="text-white-50 mb-0">
+                {{ backtest.strategy }}
+                {% if backtest.symbol %} - {{ backtest.symbol }}{% endif %}
+                | {{ backtest.start_date }} to {{ backtest.end_date }}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'backtest_form' %}" class="btn btn-outline-info me-2">
+                <i class="bi bi-arrow-left"></i> New Backtest
+            </a>
+            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#saveModal">
+                <i class="bi bi-bookmark-plus"></i> Save
+            </button>
+            <a href="{% url 'backtest_export' backtest.id %}" class="btn btn-warning">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="results-container">
+        <h3 class="mb-4"><i class="bi bi-clipboard-data"></i> Performance Summary</h3>
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Total Trades</div>
+                    <div class="stat-value text-info">{{ summary.total_trades }}</div>
+                    <small class="text-white-50">
+                        <span class="text-success">{{ summary.winning_trades }} W</span> / 
+                        <span class="text-danger">{{ summary.losing_trades }} L</span>
+                    </small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value text-{{ backtest.get_performance_badge }}">
+                        {{ summary.win_rate }}
+                    </div>
+                    <small class="text-white-50">Target: 55%+</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Avg R:R</div>
+                    <div class="stat-value text-warning">{{ summary.avg_rr }}</div>
+                    <small class="text-white-50">Risk:Reward ratio</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Profit Factor</div>
+                    <div class="stat-value text-{% if backtest.profit_factor >= 2 %}success{% elif backtest.profit_factor >= 1.5 %}info{% else %}danger{% endif %}">
+                        {{ summary.profit_factor }}
+                    </div>
+                    <small class="text-white-50">Gross profit / loss</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-3 mt-3">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Max Drawdown</div>
+                    <div class="stat-value text-{% if backtest.max_drawdown < 10 %}success{% elif backtest.max_drawdown < 20 %}warning{% else %}danger{% endif %}">
+                        {{ summary.max_drawdown }}
+                    </div>
+                    <small class="text-white-50">Maximum equity decline</small>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Total P&L</div>
+                    <div class="stat-value {% if backtest.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ summary.total_pnl }}
+                    </div>
+                    <small class="text-white-50">Net profit/loss</small>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Final Equity</div>
+                    <div class="stat-value text-info">
+                        ${{ ending_equity|floatformat:2 }}
+                    </div>
+                    <small class="text-white-50">Started: ${{ starting_capital }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="chart-container">
+                <h4 class="mb-3"><i class="bi bi-graph-up-arrow"></i> Equity Curve</h4>
+                <canvas id="equityChart" height="80"></canvas>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h4 class="mb-3"><i class="bi bi-bar-chart"></i> Win/Loss Distribution</h4>
+                <canvas id="winlossChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Details Table -->
+    <div class="results-container">
+        <h3 class="mb-3"><i class="bi bi-list-task"></i> Trade Details</h3>
+        
+        <div class="table-responsive trade-table">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th>Entry</th>
+                        <th>SL/TP</th>
+                        <th>R:R</th>
+                        <th>Result</th>
+                        <th>P&L</th>
+                        <th>Equity</th>
+                        <th>AI Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trade in backtest.trade_details %}
+                        <tr class="{% if trade.outcome == 'win' %}trade-win{% elif trade.outcome == 'loss' %}trade-loss{% endif %}">
+                            <td>{{ trade.date }}</td>
+                            <td><strong>{{ trade.symbol }}</strong></td>
+                            <td>
+                                <span class="badge bg-{% if trade.side == 'buy' or trade.side == 'BUY' %}success{% else %}danger{% endif %}">
+                                    {{ trade.side|upper }}
+                                </span>
+                            </td>
+                            <td>{{ trade.entry }}</td>
+                            <td>
+                                <small>
+                                    SL: {{ trade.sl }}<br>
+                                    TP: {{ trade.tp }}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ trade.rr }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if trade.outcome == 'win' %}
+                                    <span class="badge bg-success">WIN</span>
+                                {% elif trade.outcome == 'loss' %}
+                                    <span class="badge bg-danger">LOSS</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">BE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="{% if trade.pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ trade.pnl|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>{{ trade.equity|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">
+                                    {{ trade.ai_score }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'trade_replay' trade.id %}" class="btn btn-sm btn-outline-primary btn-action">
+                                    <i class="bi bi-play-circle"></i> Replay
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Save Modal -->
+<div class="modal fade" id="saveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-info">
+                    <i class="bi bi-bookmark-plus"></i> Save Backtest
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'backtest_save' backtest.id %}" id="saveForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="backtest_name" class="form-label text-white">Backtest Name (Optional)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" 
+                               id="backtest_name" name="name" 
+                               placeholder="e.g., Trend Strategy - Q4 2024">
+                    </div>
+                    <p class="text-white-50 small">
+                        Saving this backtest will make it easier to find and compare later.
+                    </p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Save Backtest
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Equity Curve Chart
+const equityCtx = document.getElementById('equityChart').getContext('2d');
+const equityChart = new Chart(equityCtx, {
+    type: 'line',
+    data: {
+        labels: {{ equity_labels|safe }},
+        datasets: [{
+            label: 'Equity',
+            data: {{ equity_data|safe }},
+            borderColor: '#00d4ff',
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#00d4ff',
+                bodyColor: '#fff',
+                borderColor: '#00d4ff',
+                borderWidth: 1
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#999',
+                    maxRotation: 45,
+                    minRotation: 45
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#999',
+                    callback: function(value) {
+                        return '$' + value.toFixed(2);
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+// Win/Loss Distribution Chart
+const winlossCtx = document.getElementById('winlossChart').getContext('2d');
+const winlossChart = new Chart(winlossCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ winloss_labels|safe }},
+        datasets: [
+            {
+                label: 'Wins',
+                data: {{ winloss_wins|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Losses',
+                data: {{ winloss_losses|safe }},
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#999'
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: false,
+                ticks: {
+                    color: '#999',
+                    maxRotation: 90,
+                    minRotation: 90
+                },
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                stacked: false,
+                ticks: {
+                    color: '#999',
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+// Handle save form submission
+document.getElementById('saveForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Backtest saved successfully!');
+            location.reload();
+        }
+    })
+    .catch(error => {
+        alert('Error saving backtest');
+        console.error(error);
+    });
+});
+</script>
+{% endblock %}

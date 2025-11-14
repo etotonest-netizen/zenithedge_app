@@ -1,0 +1,236 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lesson.title }} - ZenithMentor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        .lesson-header { background: linear-gradient(135deg, #0f3460 0%, #16537e 100%); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; }
+        .content-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 2rem; margin-bottom: 2rem; }
+        .step-card { background: rgba(255,255,255,0.03); border-left: 4px solid #4CAF50; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px; transition: all 0.3s; }
+        .step-card:hover { background: rgba(255,255,255,0.06); transform: translateX(5px); }
+        .step-card.concept { border-left-color: #2196F3; }
+        .step-card.rules { border-left-color: #FF9800; }
+        .step-card.demo { border-left-color: #9C27B0; }
+        .step-card.mistakes { border-left-color: #F44336; }
+        .step-card.quiz { border-left-color: #00BCD4; }
+        .step-card.simulation { border-left-color: #4CAF50; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .theory-content { line-height: 1.8; font-size: 1.05rem; }
+        .theory-content h3 { color: #4CAF50; margin-top: 2rem; margin-bottom: 1rem; }
+        .theory-content h4 { color: #2196F3; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .theory-content ul { margin-left: 1.5rem; }
+        .theory-content code { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
+        .action-btn { padding: 1rem 2rem; font-size: 1.1rem; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'zenithmentor:dashboard' %}">
+                <i class="bi bi-mortarboard-fill"></i> ZenithMentor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:dashboard' %}"><i class="bi bi-house-fill"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:curriculum' %}"><i class="bi bi-book-fill"></i> Curriculum</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:scenario_list' %}"><i class="bi bi-collection-play-fill"></i> Scenarios</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="lesson-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">Week {{ lesson.week }}</span>
+                        <span class="badge bg-info ms-2">{{ lesson.get_category_display }}</span>
+                    </div>
+                    <h1><i class="bi bi-book-half"></i> {{ lesson.title }}</h1>
+                    <p class="mb-0 mt-2">{{ lesson.description|default:"Complete this lesson to progress in your training" }}</p>
+                </div>
+                <div class="text-end">
+                    {% if is_completed %}
+                        <span class="badge bg-success" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                            <i class="bi bi-check-circle-fill"></i> Completed
+                        </span>
+                    {% elif is_current %}
+                        <span class="badge bg-warning text-dark" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                            <i class="bi bi-play-circle-fill"></i> In Progress
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if lesson.prerequisites.exists and not prerequisites_met %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> Prerequisites Required</h5>
+            <p>You must complete the following lessons before accessing this content:</p>
+            <ul>
+                {% for prereq in lesson.prerequisites.all %}
+                <li>{{ prereq.title }}</li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'zenithmentor:curriculum' %}" class="btn btn-warning">View Curriculum</a>
+        </div>
+        {% else %}
+
+        <!-- Theory Content -->
+        {% if lesson.theory_content %}
+        <div class="content-card">
+            <h3><i class="bi bi-journal-text"></i> Theory & Concepts</h3>
+            <div class="theory-content mt-3">
+                {{ lesson.theory_content|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Video Content -->
+        {% if lesson.video_url %}
+        <div class="content-card">
+            <h3><i class="bi bi-camera-video-fill"></i> Video Tutorial</h3>
+            <div class="video-container mt-3">
+                <iframe src="{{ lesson.video_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Demo Chart -->
+        {% if lesson.demo_chart_url %}
+        <div class="content-card">
+            <h3><i class="bi bi-graph-up-arrow"></i> Interactive Chart Example</h3>
+            <p class="text-muted">Study this example to see the concepts in action</p>
+            <a href="{{ lesson.demo_chart_url }}" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-box-arrow-up-right"></i> Open Chart
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Lesson Steps -->
+        {% if steps %}
+        <div class="content-card">
+            <h3><i class="bi bi-list-check"></i> Lesson Steps</h3>
+            <p class="text-muted mb-4">Work through each step to master this lesson</p>
+            
+            {% for step in steps %}
+            <div class="step-card {{ step.step_type }}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5>
+                            {% if step.step_type == 'concept' %}<i class="bi bi-lightbulb-fill text-primary"></i>
+                            {% elif step.step_type == 'rules' %}<i class="bi bi-list-ul text-warning"></i>
+                            {% elif step.step_type == 'demo' %}<i class="bi bi-play-circle-fill text-purple"></i>
+                            {% elif step.step_type == 'mistakes' %}<i class="bi bi-x-circle-fill text-danger"></i>
+                            {% elif step.step_type == 'quiz' %}<i class="bi bi-question-circle-fill text-info"></i>
+                            {% elif step.step_type == 'simulation' %}<i class="bi bi-controller text-success"></i>
+                            {% endif %}
+                            Step {{ forloop.counter }}: {{ step.get_step_type_display }}
+                        </h5>
+                        <p class="mb-0">{{ step.description|default:"Complete this step" }}</p>
+                        
+                        {% if step.step_type == 'quiz' and step.quiz_questions %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-list-check"></i> {{ step.quiz_questions|length }} questions
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if step.step_type == 'simulation' and step.required_scenarios.exists %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-collection-play"></i> {{ step.required_scenarios.count }} required scenarios
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if step.step_type == 'quiz' %}
+                            <button class="btn btn-info btn-sm" onclick="alert('Quiz feature coming soon!')">
+                                <i class="bi bi-play-fill"></i> Take Quiz
+                            </button>
+                        {% elif step.step_type == 'simulation' %}
+                            {% if step.required_scenarios.exists %}
+                                <a href="{% url 'zenithmentor:scenario_list' %}?lesson={{ lesson.id }}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-play-fill"></i> Practice
+                                </a>
+                            {% else %}
+                                <a href="{% url 'zenithmentor:scenario_list' %}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-play-fill"></i> Practice
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Required Scenarios -->
+        {% if required_scenarios %}
+        <div class="content-card">
+            <h3><i class="bi bi-collection-play-fill"></i> Required Practice Scenarios</h3>
+            <p class="text-muted">Complete these scenarios to finish the lesson (minimum {{ lesson.min_pass_score }}% score)</p>
+            
+            <div class="row">
+                {% for scenario in required_scenarios %}
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-success">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ scenario.name }}</h5>
+                            <p class="card-text text-muted">
+                                <small>
+                                    <i class="bi bi-speedometer2"></i> Difficulty {{ scenario.difficulty }}/10 | 
+                                    <i class="bi bi-graph-up"></i> {{ scenario.get_regime_display }}
+                                </small>
+                            </p>
+                            <form method="post" action="{% url 'zenithmentor:launch_simulation' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="scenario_id" value="{{ scenario.id }}">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-play-fill"></i> Launch
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Navigation -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="{% url 'zenithmentor:curriculum' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Curriculum
+            </a>
+            
+            {% if next_lesson %}
+            <a href="{% url 'zenithmentor:lesson_detail' next_lesson.id %}" class="btn btn-primary action-btn">
+                Next Lesson <i class="bi bi-arrow-right"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'zenithmentor:scenario_list' %}" class="btn btn-success action-btn">
+                <i class="bi bi-play-fill"></i> Practice Scenarios
+            </a>
+            {% endif %}
+        </div>
+
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

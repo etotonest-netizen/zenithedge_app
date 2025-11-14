@@ -1,0 +1,302 @@
+{% extends "signals/base.html" %}
+{% load static %}
+
+{% block title %}Backtest - ZenithEdge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backtest-form-container {
+        background: linear-gradient(135deg, #1a1c2e 0%, #0f1119 100%);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .form-label {
+        color: #00d4ff;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .form-control, .form-select {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: #00d4ff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+        color: #fff;
+    }
+    .form-select option {
+        background-color: #1a1c2e;
+        color: #fff;
+    }
+    .btn-run-backtest {
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+        border: none;
+        padding: 12px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    .btn-run-backtest:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+    }
+    .saved-backtests-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    .saved-backtest-item {
+        background: rgba(0, 212, 255, 0.1);
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 3px solid #00d4ff;
+        transition: all 0.3s ease;
+    }
+    .saved-backtest-item:hover {
+        background: rgba(0, 212, 255, 0.2);
+        transform: translateX(5px);
+    }
+    .info-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h1 class="mb-2">
+            <i class="bi bi-graph-up-arrow"></i> Dynamic Backtesting
+        </h1>
+        <p class="text-white-50">Test your strategies against historical signal data</p>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-info">
+                <div class="card-body text-center">
+                    <h5 class="text-info"><i class="bi bi-graph-up"></i> Total Signals</h5>
+                    <h2 class="text-white">{{ total_signals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-success">
+                <div class="card-body text-center">
+                    <h5 class="text-success"><i class="bi bi-calendar-range"></i> Date Range</h5>
+                    <p class="mb-0 text-white">
+                        {% if earliest_date %}
+                            {{ earliest_date }} to {{ latest_date }}
+                        {% else %}
+                            No data yet
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-warning">
+                <div class="card-body text-center">
+                    <h5 class="text-warning"><i class="bi bi-bookmark-star"></i> Saved Backtests</h5>
+                    <h2 class="text-white">{{ saved_backtests.count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Backtest Form -->
+            <div class="backtest-form-container">
+                <h3 class="mb-4">
+                    <i class="bi bi-sliders"></i> Configure Backtest
+                </h3>
+                
+                <form method="post" action="{% url 'backtest_run' %}" id="backtestForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Strategy -->
+                        <div class="col-md-6 mb-3">
+                            <label for="strategy" class="form-label">
+                                <i class="bi bi-bullseye"></i> Strategy *
+                            </label>
+                            <select class="form-select" id="strategy" name="strategy" required>
+                                <option value="">All Strategies</option>
+                                {% for strat in strategies %}
+                                    <option value="{{ strat }}">{{ strat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Symbol -->
+                        <div class="col-md-6 mb-3">
+                            <label for="symbol" class="form-label">
+                                <i class="bi bi-currency-exchange"></i> Symbol
+                            </label>
+                            <select class="form-select" id="symbol" name="symbol">
+                                <option value="">All Symbols</option>
+                                {% for sym in symbols %}
+                                    <option value="{{ sym }}">{{ sym }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Timeframe -->
+                        <div class="col-md-6 mb-3">
+                            <label for="timeframe" class="form-label">
+                                <i class="bi bi-clock"></i> Timeframe
+                            </label>
+                            <select class="form-select" id="timeframe" name="timeframe">
+                                <option value="">All Timeframes</option>
+                                {% for tf in timeframes %}
+                                    {% if tf %}
+                                        <option value="{{ tf }}">{{ tf }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Min AI Score -->
+                        <div class="col-md-6 mb-3">
+                            <label for="min_score" class="form-label">
+                                <i class="bi bi-star"></i> Min AI Score
+                            </label>
+                            <input type="number" class="form-control" id="min_score" name="min_score" 
+                                   min="0" max="100" placeholder="e.g. 70">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Start Date -->
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">
+                                <i class="bi bi-calendar-check"></i> Start Date *
+                            </label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ earliest_date|date:'Y-m-d' }}" required>
+                        </div>
+                        
+                        <!-- End Date -->
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">
+                                <i class="bi bi-calendar-x"></i> End Date *
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ latest_date|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Options -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ignore_news" name="ignore_news">
+                            <label class="form-check-label" for="ignore_news">
+                                <i class="bi bi-newspaper"></i> Ignore news-blocked signals
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-run-backtest">
+                            <i class="bi bi-play-circle"></i> Run Backtest
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Saved Backtests -->
+            <div class="saved-backtests-card">
+                <h4 class="mb-3">
+                    <i class="bi bi-bookmark-check"></i> Recent Saved Backtests
+                </h4>
+                
+                {% if saved_backtests %}
+                    {% for bt in saved_backtests %}
+                        <a href="{% url 'backtest_results' bt.id %}" class="text-decoration-none">
+                            <div class="saved-backtest-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-white">
+                                            {{ bt.name|default:bt.strategy }}
+                                        </strong>
+                                        <br>
+                                        <small class="text-white-50">
+                                            {{ bt.symbol|default:"All" }} | {{ bt.start_date }} to {{ bt.end_date }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ bt.get_performance_badge }}">
+                                            {{ bt.win_rate|floatformat:1 }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'backtest_list' %}" class="btn btn-sm btn-outline-info">
+                            View All Saved Backtests
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-center text-white-50">
+                        <i class="bi bi-inbox"></i><br>
+                        No saved backtests yet
+                    </p>
+                {% endif %}
+            </div>
+            
+            <!-- Help Card -->
+            <div class="card bg-dark border-info mt-3">
+                <div class="card-body">
+                    <h5 class="card-title text-info">
+                        <i class="bi bi-info-circle"></i> How It Works
+                    </h5>
+                    <ul class="text-white-50 small">
+                        <li>Select your strategy and filters</li>
+                        <li>Choose a date range to backtest</li>
+                        <li>Click "Run Backtest" to analyze historical performance</li>
+                        <li>Review equity curve, win rate, and trade details</li>
+                        <li>Save successful backtests for reference</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.getElementById('backtestForm').addEventListener('submit', function(e) {
+    const startDate = new Date(document.getElementById('start_date').value);
+    const endDate = new Date(document.getElementById('end_date').value);
+    
+    if (endDate < startDate) {
+        e.preventDefault();
+        alert('End date must be after start date');
+        return false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'admin_dashboard/base_module.html' %}
+
+{% block module_title %}ZenBot Conversations{% endblock %}
+
+{% block stats_cards %}
+<div class="col-md-12 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="stat-label">Total Conversations</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block table_content %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Topic</th>
+            <th>Messages</th>
+            <th>Last Message</th>
+            <th>Status</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for conversation in conversations %}
+        <tr>
+            <td>{{ conversation.user.email|truncatechars:25 }}</td>
+            <td>
+                {% if conversation.topic %}
+                    {{ conversation.topic|truncatechars:30 }}
+                {% else %}
+                    <span class="text-muted">General Chat</span>
+                {% endif %}
+            </td>
+            <td>{{ conversation.message_count|default:0 }}</td>
+            <td>
+                {% if conversation.last_message_at %}
+                    {{ conversation.last_message_at|date:"M d, Y H:i" }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if conversation.is_active %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Closed</span>
+                {% endif %}
+            </td>
+            <td>{{ conversation.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center text-muted">No conversations found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

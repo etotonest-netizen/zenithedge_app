@@ -1,0 +1,26 @@
+# Knowledge Base System Requirements
+# Install with: pip install -r requirements_kb.txt
+
+# Core NLP & Embeddings
+sentence-transformers==2.2.2  # Semantic embeddings
+spacy==3.7.2  # NLP processing, NER
+textblob==0.17.1  # Sentiment analysis
+
+# Vector Search
+faiss-cpu==1.7.4  # CPU-only FAISS (use faiss-gpu if CUDA available)
+
+# Web Scraping
+beautifulsoup4==4.12.2  # HTML parsing
+lxml==4.9.3  # XML parsing for sitemaps
+requests==2.31.0  # HTTP requests
+feedparser==6.0.10  # RSS feed parsing
+
+# Utilities
+numpy==1.24.3  # Array operations
+tqdm==4.66.1  # Progress bars
+
+# Optional: Download spaCy model after install
+# python -m spacy download en_core_web_sm
+
+# Optional: Download TextBlob corpora
+# python -m textblob.download_corpora

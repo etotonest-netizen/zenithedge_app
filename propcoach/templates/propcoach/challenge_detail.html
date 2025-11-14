@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge Detail | PropCoach</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-bottom: 2px solid #3b82f6;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24 !important;
+        }
+        .container-fluid {
+            padding: 20px;
+        }
+        .challenge-header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .card-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #fbbf24;
+        }
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+        .status-passed {
+            background: #3b82f6;
+            color: white;
+        }
+        .status-failed {
+            background: #ef4444;
+            color: white;
+        }
+        .violation-item {
+            padding: 15px;
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .coaching-item {
+            padding: 15px;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .trade-row {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .trade-row:hover {
+            background: #f9fafb;
+        }
+        .profit-positive {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .profit-negative {
+            color: #ef4444;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/propcoach/">
+                <i class="bi bi-trophy-fill"></i> PropCoach
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/signals/">
+                            <i class="bi bi-speedometer2"></i> Main Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/propcoach/">
+                            <i class="bi bi-trophy"></i> PropCoach Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/logout/">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Challenge Header -->
+        <div class="challenge-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1><i class="bi bi-trophy"></i> {{ challenge.template.template_name }}</h1>
+                    <p class="text-muted mb-0">Started: {{ challenge.start_date|date:"M d, Y H:i" }}</p>
+                </div>
+                <span class="status-badge status-{{ challenge.status }}">
+                    {{ challenge.get_status_display|upper }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Current Balance</div>
+                <div class="stat-value">${{ challenge.current_balance|floatformat:2 }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total P/L</div>
+                <div class="stat-value" style="color: {% if challenge.total_profit_loss >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                    ${{ challenge.total_profit_loss|floatformat:2 }}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Profit Target</div>
+                <div class="stat-value" style="color: #3b82f6;">
+                    {{ challenge.profit_progress_percent|floatformat:1 }}%
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Daily Drawdown</div>
+                <div class="stat-value" style="color: {% if challenge.current_daily_drawdown > thresholds.daily_80 %}#ef4444{% else %}#10b981{% endif %};">
+                    ${{ challenge.current_daily_drawdown|floatformat:2 }}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Drawdown</div>
+                <div class="stat-value" style="color: {% if challenge.current_total_drawdown > thresholds.total_80 %}#ef4444{% else %}#10b981{% endif %};">
+                    ${{ challenge.current_total_drawdown|floatformat:2 }}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value">{{ challenge.win_rate|floatformat:1 }}%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Trades</div>
+                <div class="stat-value">{{ challenge.total_trades }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Trading Days</div>
+                <div class="stat-value">{{ challenge.trading_days_count }} / {{ challenge.template.max_trading_days }}</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Equity Curve -->
+            <div class="col-lg-8">
+                <div class="card-section">
+                    <div class="section-title">
+                        <i class="bi bi-graph-up"></i> Equity Curve
+                    </div>
+                    <canvas id="equityChart" height="80"></canvas>
+                </div>
+
+                <!-- Recent Trades -->
+                <div class="card-section">
+                    <div class="section-title">
+                        <i class="bi bi-list-ul"></i> Recent Trades
+                    </div>
+                    {% if trades %}
+                        <div>
+                            {% for trade in trades|slice:":10" %}
+                            <div class="trade-row">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>{{ trade.symbol }}</strong>
+                                        <span class="badge bg-{% if trade.side == 'buy' %}success{% else %}danger{% endif %} ms-2">
+                                            {{ trade.side|upper }}
+                                        </span>
+                                        <small class="text-muted ms-2">{{ trade.entry_time|date:"M d, H:i" }}</small>
+                                    </div>
+                                    <div>
+                                        <span class="{% if trade.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %}">
+                                            ${{ trade.profit_loss|floatformat:2 }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No trades recorded yet.</p>
+                    {% endif %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'propcoach:trade_log' challenge.id %}" class="btn btn-outline-primary">
+                            View All Trades
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Violations -->
+                <div class="card-section">
+                    <div class="section-title">
+                        <i class="bi bi-exclamation-triangle"></i> Violations
+                    </div>
+                    {% if violations %}
+                        {% for violation in violations|slice:":5" %}
+                        <div class="violation-item">
+                            <strong>{{ violation.rule_type }}</strong>
+                            <p class="mb-0 small">{{ violation.description }}</p>
+                            <small class="text-muted">{{ violation.timestamp|date:"M d, H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-success">✓ No violations - Keep it up!</p>
+                    {% endif %}
+                </div>
+
+                <!-- Coaching Feedback -->
+                <div class="card-section">
+                    <div class="section-title">
+                        <i class="bi bi-chat-quote"></i> AI Coaching
+                    </div>
+                    {% if coaching %}
+                        {% for feedback in coaching|slice:":3" %}
+                        <div class="coaching-item">
+                            <strong>{{ feedback.insight_type }}</strong>
+                            <p class="mb-0 small">{{ feedback.message|truncatewords:30 }}</p>
+                            <small class="text-muted">{{ feedback.timestamp|date:"M d, H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'propcoach:coaching_panel' challenge.id %}" class="btn btn-outline-primary btn-sm">
+                                View All Coaching
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No coaching feedback yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Equity Curve Chart
+        const equityData = {{ equity_data|safe }};
+        
+        if (equityData && equityData.length > 0) {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: equityData.map(d => new Date(d.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Account Balance',
+                        data: equityData.map(d => d.balance),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

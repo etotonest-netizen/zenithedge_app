@@ -1,0 +1,20 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/equabish/etotonest.com"
+PassengerBaseURI "/"
+PassengerPython "/home/equabish/virtualenv/etotonest.com/3.11/bin/python"
+PassengerAppEnv production
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# Environment Variables for Passenger
+PassengerAppEnv production
+
+SetEnv ALLOWED_HOSTS etotonest.com,www.etotonest.com,z.equatorfoods.org,www.z.equatorfoods.org
+SetEnv DB_HOST localhost
+SetEnv DB_NAME equabish_zenithedge_db
+SetEnv DB_PASSWORD Edtechub@2023
+SetEnv DB_PORT 3306
+SetEnv DB_USER equabish_zenithedge_user
+SetEnv DEBUG False
+SetEnv DJANGO_SECRET_KEY 2dx@z^o^o72dy9fcpxgbz=oh)4(9g8ieza$%%_klc!5^q(&_%2
+SetEnv DJANGO_SETTINGS_MODULE zenithedge.settings_production
+SetEnv WEBHOOK_TOKEN Wx_X2p-M8S8AnQ1t3D50q0gVPOQtlFsmgpzWtqY6syY

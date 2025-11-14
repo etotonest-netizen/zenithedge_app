@@ -1,0 +1,89 @@
+{% extends 'admin_dashboard/base_module.html' %}
+
+{% block module_title %}Support Threads{% endblock %}
+
+{% block stats_cards %}
+<div class="col-md-6 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="stat-label">Total Threads</div>
+    </div>
+</div>
+<div class="col-md-6 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ open_count }}</div>
+        <div class="stat-label">Open Threads</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block table_content %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Subject</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for thread in threads %}
+        <tr>
+            <td>{{ thread.user.email|truncatechars:25 }}</td>
+            <td>
+                {% if thread.subject %}
+                    {{ thread.subject|truncatechars:40 }}
+                {% else %}
+                    <span class="text-muted">No subject</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if thread.category %}
+                    <span class="badge bg-secondary">{{ thread.category }}</span>
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if thread.priority == 'high' %}
+                    <span class="badge bg-danger">High</span>
+                {% elif thread.priority == 'medium' %}
+                    <span class="badge bg-warning">Medium</span>
+                {% elif thread.priority == 'low' %}
+                    <span class="badge bg-info">Low</span>
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if thread.status == 'open' %}
+                    <span class="badge bg-success">Open</span>
+                {% elif thread.status == 'closed' %}
+                    <span class="badge bg-secondary">Closed</span>
+                {% elif thread.status == 'pending' %}
+                    <span class="badge bg-warning">Pending</span>
+                {% else %}
+                    <span class="badge bg-info">{{ thread.status|title }}</span>
+                {% endif %}
+            </td>
+            <td>{{ thread.created_at|date:"M d, Y" }}</td>
+            <td>
+                {% if thread.updated_at %}
+                    {{ thread.updated_at|date:"M d, Y" }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" class="text-center text-muted">No support threads found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

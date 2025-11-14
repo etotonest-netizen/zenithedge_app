@@ -1,0 +1,701 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            width: 260px;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        
+        .admin-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .sidebar-brand {
+            padding: 0 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            color: #fff;
+            background: rgba(76, 175, 80, 0.1);
+            border-right: 3px solid #4CAF50;
+        }
+        
+        .sidebar-nav a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+        }
+        
+        .stat-card {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+        
+        .stat-card .stat-change {
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        
+        .stat-card.primary { border-left: 4px solid #4CAF50; }
+        .stat-card.info { border-left: 4px solid #2196F3; }
+        .stat-card.warning { border-left: 4px solid #FF9800; }
+        .stat-card.danger { border-left: 4px solid #F44336; }
+        .stat-card.success { border-left: 4px solid #8BC34A; }
+        
+        .icon-primary { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
+        .icon-info { background: rgba(33, 150, 243, 0.1); color: #2196F3; }
+        .icon-warning { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
+        .icon-danger { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+        .icon-success { background: rgba(139, 195, 74, 0.1); color: #8BC34A; }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .quick-action-btn {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .quick-action-btn:hover {
+            background: rgba(76, 175, 80, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .activity-feed {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .activity-item {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        
+        .health-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .health-healthy { background: #4CAF50; }
+        .health-warning { background: #FF9800; }
+        .health-critical { background: #F44336; }
+        
+        .table-dark {
+            background: rgba(26, 26, 46, 0.6);
+        }
+        
+        .badge-custom {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <div class="sidebar-brand">
+            <h4 class="text-white mb-0"><i class="bi bi-shield-check"></i> Admin Panel</h4>
+            <small class="text-muted">ZenithEdge Control Center</small>
+        </div>
+        
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'admin_dashboard:dashboard' %}" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li><a href="{% url 'admin_dashboard:user_management' %}"><i class="bi bi-people"></i> User Management</a></li>
+            <li><a href="{% url 'admin_dashboard:analytics' %}"><i class="bi bi-graph-up"></i> Analytics</a></li>
+            <li><a href="{% url 'admin_dashboard:settings' %}"><i class="bi bi-gear"></i> System Settings</a></li>
+            
+            <li style="margin-top: 20px; padding: 10px 20px;">
+                <small class="text-muted text-uppercase">Module Management</small>
+            </li>
+            
+            <li><a href="{% url 'admin_dashboard:signals' %}"><i class="bi bi-broadcast"></i> Trade Insights</a></li>
+            <li><a href="{% url 'admin_dashboard:strategies' %}"><i class="bi bi-diagram-3"></i> Strategy Performance</a></li>
+            <li><a href="{% url 'admin_dashboard:sessions' %}"><i class="bi bi-clock-history"></i> Session Rules</a></li>
+            <li><a href="{% url 'admin_dashboard:risk_control' %}"><i class="bi bi-shield-exclamation"></i> Risk Control</a></li>
+            <li><a href="{% url 'admin_dashboard:prop_rules' %}"><i class="bi bi-shield-check"></i> Prop Rules</a></li>
+            <li><a href="{% url 'admin_dashboard:trade_journal' %}"><i class="bi bi-journal-text"></i> Trade Journal</a></li>
+            <li><a href="/admin/knowledge_base/"><i class="bi bi-book"></i> Knowledge Base</a></li>
+            <li><a href="{% url 'admin_dashboard:zenithmentor' %}"><i class="bi bi-mortarboard"></i> ZenithMentor</a></li>
+            <li><a href="{% url 'admin_dashboard:propcoach' %}"><i class="bi bi-trophy"></i> PropCoach</a></li>
+            <li><a href="{% url 'admin_dashboard:zenbot' %}"><i class="bi bi-chat-dots"></i> ZenBot</a></li>
+            <li><a href="{% url 'admin_dashboard:zennews' %}"><i class="bi bi-newspaper"></i> ZenNews</a></li>
+            <li><a href="{% url 'admin_dashboard:support' %}"><i class="bi bi-life-preserver"></i> Support</a></li>
+            <li><a href="/autopsy/"><i class="bi bi-activity"></i> AutopsyLoop</a></li>
+            
+            <li style="margin-top: 20px; padding: 10px 20px;">
+                <small class="text-muted text-uppercase">System</small>
+            </li>
+            
+            <li><a href="/admin/"><i class="bi bi-database"></i> Django Admin</a></li>
+            <li><a href="{% url 'signals:dashboard' %}"><i class="bi bi-house-door"></i> Main Dashboard</a></li>
+            <li><a href="/admin/logout/"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="admin-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-white mb-0">Admin Control Panel</h2>
+                <small class="text-muted">Comprehensive system management and analytics</small>
+            </div>
+            <div>
+                <span class="text-muted me-3">{{ request.user.email }}</span>
+                <span class="badge bg-success">Admin</span>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'admin_dashboard:add_user' %}" class="quick-action-btn">
+                <i class="bi bi-person-plus"></i> Add User
+            </a>
+            <a href="{% url 'admin_dashboard:signals' %}" class="quick-action-btn">
+                <i class="bi bi-broadcast"></i> Trade Insights
+            </a>
+            <a href="{% url 'admin_dashboard:strategies' %}" class="quick-action-btn">
+                <i class="bi bi-diagram-3"></i> View Strategies
+            </a>
+            <a href="{% url 'admin_dashboard:settings' %}" class="quick-action-btn">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+        </div>
+        
+        <!-- System Health -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="activity-feed">
+                    <h5 class="mb-3"><i class="bi bi-heart-pulse"></i> System Health</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <span class="health-indicator health-healthy"></span> Database: {{ system_health.database|upper }}
+                        </div>
+                        <div class="col-md-3">
+                            <span class="health-indicator health-healthy"></span> API: {{ system_health.api_status|upper }}
+                        </div>
+                        <div class="col-md-3">
+                            <span class="health-indicator health-healthy"></span> Storage: {{ system_health.storage|upper }}
+                        </div>
+                        <div class="col-md-3">
+                            <span class="health-indicator {% if system_health.redis == 'N/A' %}health-warning{% else %}health-healthy{% endif %}"></span> Cache: {{ system_health.redis }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Statistics -->
+        <h3 class="section-title"><i class="bi bi-people"></i> User Statistics</h3>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card primary">
+                    <div class="stat-icon icon-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-value">{{ total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-change text-success">
+                        <i class="bi bi-arrow-up"></i> {{ new_users_week }} this week
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <div class="stat-value">{{ active_users }}</div>
+                    <div class="stat-label">Active Users (7 days)</div>
+                    <div class="stat-change text-info">
+                        {{ new_users_today }} joined today
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="stat-value">{{ staff_users }}</div>
+                    <div class="stat-label">Staff Members</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <div class="stat-icon icon-warning">
+                        <i class="bi bi-envelope-check"></i>
+                    </div>
+                    <div class="stat-value">{{ verified_users }}</div>
+                    <div class="stat-label">Verified Users</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trade Insights Statistics -->
+        <h3 class="section-title"><i class="bi bi-broadcast"></i> Trade Insights Performance</h3>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card primary">
+                    <div class="stat-icon icon-primary">
+                        <i class="bi bi-broadcast-pin"></i>
+                    </div>
+                    <div class="stat-value">{{ total_signals }}</div>
+                    <div class="stat-label">Total Trade Insights</div>
+                    <div class="stat-change text-success">
+                        {{ signals_today }} today
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <div class="stat-value">{{ active_signals }}</div>
+                    <div class="stat-label">Active Insights</div>
+                    <div class="stat-change text-warning">
+                        {{ signals_pending }} pending
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div class="stat-value">{{ win_rate|floatformat:1 }}%</div>
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-change">
+                        {{ winning_signals }}W / {{ losing_signals }}L
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card {% if total_pnl >= 0 %}success{% else %}danger{% endif %}">
+                    <div class="stat-icon {% if total_pnl >= 0 %}icon-success{% else %}icon-danger{% endif %}">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-value">${{ total_pnl|floatformat:2 }}</div>
+                    <div class="stat-label">Total P&L</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Module Statistics -->
+        <h3 class="section-title"><i class="bi bi-grid"></i> Module Overview</h3>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div class="stat-value">{{ total_strategies }}</div>
+                    <div class="stat-label">Trading Strategies</div>
+                    <div class="stat-change">{{ active_strategies }} active</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <div class="stat-icon icon-warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-value">{{ total_sessions }}</div>
+                    <div class="stat-label">Trading Sessions</div>
+                    <div class="stat-change">{{ active_sessions }} active</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card danger">
+                    <div class="stat-icon icon-danger">
+                        <i class="bi bi-shield-exclamation"></i>
+                    </div>
+                    <div class="stat-value">{{ risk_blocks_today }}</div>
+                    <div class="stat-label">Risk Blocks Today</div>
+                    <div class="stat-change">{{ active_risk_controls }} rules active</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <div class="stat-value">{{ total_journal_entries }}</div>
+                    <div class="stat-label">Journal Entries</div>
+                    <div class="stat-change">{{ journal_entries_week }} this week</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ZenithMentor & PropCoach -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card primary">
+                    <div class="stat-icon icon-primary">
+                        <i class="bi bi-mortarboard"></i>
+                    </div>
+                    <div class="stat-value">{{ total_apprentices }}</div>
+                    <div class="stat-label">Apprentices</div>
+                    <div class="stat-change">{{ active_simulations }} simulating</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-award"></i>
+                    </div>
+                    <div class="stat-value">{{ total_badges_awarded }}</div>
+                    <div class="stat-label">Badges Awarded</div>
+                    <div class="stat-change">{{ completed_simulations }} sims completed</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <div class="stat-icon icon-warning">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div class="stat-value">{{ total_challenges }}</div>
+                    <div class="stat-label">Prop Challenges</div>
+                    <div class="stat-change">{{ passed_challenges }} passed</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="stat-value">{{ total_conversations }}</div>
+                    <div class="stat-label">ZenBot Chats</div>
+                    <div class="stat-change">{{ conversations_today }} today</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- News & Support -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-newspaper"></i>
+                    </div>
+                    <div class="stat-value">{{ total_news }}</div>
+                    <div class="stat-label">News Articles</div>
+                    <div class="stat-change">{{ news_today }} today</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <div class="stat-icon icon-warning">
+                        <i class="bi bi-life-preserver"></i>
+                    </div>
+                    <div class="stat-value">{{ open_tickets }}</div>
+                    <div class="stat-label">Open Tickets</div>
+                    <div class="stat-change text-danger">{{ pending_tickets }} pending</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-value">{{ resolved_tickets }}</div>
+                    <div class="stat-label">Resolved Tickets</div>
+                    <div class="stat-change">{{ total_tickets }} total</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card primary">
+                    <div class="stat-icon icon-primary">
+                        <i class="bi bi-bar-chart"></i>
+                    </div>
+                    <div class="stat-value">{{ sentiment_records }}</div>
+                    <div class="stat-label">Sentiment Records</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="activity-feed">
+                    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recent Trade Insights</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pair</th>
+                                    <th>Strategy</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for signal in recent_signals %}
+                                <tr>
+                                    <td>{{ signal.symbol }}</td>
+                                    <td>{{ signal.strategy|truncatewords:2 }}</td>
+                                    <td>
+                                        <span class="badge badge-custom {% if signal.status == 'active' %}bg-success{% elif signal.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ signal.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ signal.created_at|timesince }} ago</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No recent trade insights</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="activity-feed">
+                    <h5 class="mb-3"><i class="bi bi-people"></i> Recent Users</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users %}
+                                <tr>
+                                    <td>{{ user.email|truncatewords:1 }}</td>
+                                    <td>
+                                        <span class="badge badge-custom {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                        {% if user.is_staff %}
+                                        <span class="badge badge-custom bg-primary">Staff</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.date_joined|timesince }} ago</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No users</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Strategies -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="activity-feed">
+                    <h5 class="mb-3"><i class="bi bi-trophy"></i> Top Performing Strategies</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Strategy</th>
+                                    <th>Win Rate</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for perf in strategy_performance %}
+                                <tr>
+                                    <td>{{ perf.strategy__name|truncatewords:3 }}</td>
+                                    <td>
+                                        <span class="badge badge-custom {% if perf.win_rate >= 60 %}bg-success{% elif perf.win_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ perf.win_rate|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ perf.total_trades|default:0 }}</td>
+                                    <td class="{% if perf.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        ${{ perf.total_pnl|default:0|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No performance data</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="activity-feed">
+                    <h5 class="mb-3"><i class="bi bi-life-preserver"></i> Recent Support Tickets</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in recent_tickets %}
+                                <tr>
+                                    <td>{{ ticket.user.email|truncatewords:1 }}</td>
+                                    <td>{{ ticket.subject|truncatewords:3 }}</td>
+                                    <td>
+                                        <span class="badge badge-custom {% if ticket.status == 'open' %}bg-danger{% elif ticket.status == 'pending' %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ ticket.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ ticket.created_at|timesince }} ago</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No tickets</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

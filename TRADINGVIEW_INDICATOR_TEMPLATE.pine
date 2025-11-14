@@ -1,0 +1,626 @@
+//@version=5
+// © miti_simon_p — ZenithEdge PRO (Performance Mode, patched)
+// SPDX-License-Identifier: MPL-2.0
+// ZenithEdge PRO — Unified Multi-Strategy Detector (Patched / Pine v5 / Performance)
+// Parts: 1/3 (Header, Inputs, Core Indicators, SMC)
+// ---------------------------------------------------------------------------
+
+indicator("ZenithEdge PRO — Performance Mode (Patched)", overlay=true, max_labels_count=200, max_lines_count=200)
+
+// -------------------- USER INPUTS --------------------
+mode               = input.string("All", "Mode", options=["All","SMC","ICT","Trend","Breakout","MeanReversion","Squeeze","Scalp","VWAP","SupplyDemand","MultiTF"])
+user_uuid          = input.string("", "Webhook USER_UUID (debug)")
+min_confidence     = input.int(35, "Min confidence to show insight", minval=0, maxval=100)
+show_debug         = input.bool(false, "Show debug label (testing)")
+draw_visuals       = input.bool(true, "Show visual markers (turn off to save CPU)")
+swing_len          = input.int(10, "SMC Swing Lookback", minval=3, maxval=60)
+search_lookback    = input.int(30, "FVG/OB Search Lookback (live)", minval=10, maxval=120)
+atr_period         = input.int(14, "ATR Period", minval=1)
+fastMA_len         = input.int(10, "Fast MA", minval=1)
+slowMA_len         = input.int(30, "Slow MA", minval=1)
+adx_len            = input.int(14, "ADX Length", minval=1)
+bb_len             = input.int(20, "BB Length", minval=1)
+bb_mult            = input.float(2.0, "BB Mult", step=0.1)
+kc_len             = input.int(20, "KC Length", minval=1)
+kc_mult            = input.float(1.5, "KC ATR Mult", step=0.1)
+donchian_len       = input.int(20, "Donchian Length", minval=1)
+rsi_len            = input.int(14, "RSI Length", minval=1)
+scalp_enable       = input.bool(false, "Enable scalp mode (chart must be 1m/5m)")
+htf_tf             = input.timeframe("240", "Primary HTF")
+htf2_tf            = input.timeframe("60",  "Secondary HTF")
+plot_shapes = input.bool(true, "Show strategy markers")
+indicator_version  = 2.0
+
+// Session hours (UTC)
+london_start_h = input.int(7, "London start (UTC)")
+london_end_h   = input.int(10, "London end (UTC)")
+ny_start_h     = input.int(13, "NY start (UTC)")
+ny_end_h       = input.int(16, "NY end (UTC)")
+
+// Visual throttle
+visual_max_age = input.int(120, "Max bars to keep boxes/OBs", minval=20, maxval=1000)
+
+// -------------------- CORE INDICATORS (single compute) --------------------
+atr      = ta.atr(atr_period)
+fastMA   = ta.sma(close, fastMA_len)
+slowMA   = ta.sma(close, slowMA_len)
+// NOTE: ta.dmi(length, adxSmoothing). Passing adx_len as second param to satisfy signature
+[diplus, diminus, adx_val] = ta.dmi(adx_len, adx_len)
+adx_ok   = adx_val > 25
+vol_sma  = ta.sma(volume, 20)
+vol_spike = volume > vol_sma * 1.5
+
+bb_basis = ta.sma(close, bb_len)
+bb_dev   = bb_mult * ta.stdev(close, bb_len)
+bb_up    = bb_basis + bb_dev
+bb_lo    = bb_basis - bb_dev
+kc_basis = ta.ema(close, kc_len)
+kc_up    = kc_basis + kc_mult * atr
+kc_lo    = kc_basis - kc_mult * atr
+squeezeOn = (bb_up < kc_up) and (bb_lo > kc_lo)
+
+don_hi = ta.highest(high, donchian_len)
+don_lo = ta.lowest(low, donchian_len)
+
+// vwap requires a source argument
+vwap_val = ta.vwap(close)
+
+// Multi-TF trend
+htf_fast = request.security(syminfo.tickerid, htf_tf, ta.sma(close, fastMA_len), lookahead=barmerge.lookahead_off)
+htf_slow = request.security(syminfo.tickerid, htf_tf, ta.sma(close, slowMA_len), lookahead=barmerge.lookahead_off)
+htf_trend = htf_fast > htf_slow ? 1 : htf_fast < htf_slow ? -1 : 0
+htf2_fast = request.security(syminfo.tickerid, htf2_tf, ta.sma(close, fastMA_len), lookahead=barmerge.lookahead_off)
+htf2_slow = request.security(syminfo.tickerid, htf2_tf, ta.sma(close, slowMA_len), lookahead=barmerge.lookahead_off)
+htf2_trend = htf2_fast > htf2_slow ? 1 : htf2_fast < htf2_slow ? -1 : 0
+
+// -------------------- SESSIONS --------------------
+london_start = timestamp("GMT+0", year, month, dayofmonth, london_start_h, 0)
+london_end   = timestamp("GMT+0", year, month, dayofmonth, london_end_h, 0)
+ny_start     = timestamp("GMT+0", year, month, dayofmonth, ny_start_h, 0)
+ny_end       = timestamp("GMT+0", year, month, dayofmonth, ny_end_h, 0)
+in_london = time >= london_start and time < london_end
+in_ny     = time >= ny_start and time < ny_end
+sess = in_london ? "London" : in_ny ? "NY" : "Other"
+
+// -------------------- SMC: Swing (lightweight, robust) --------------------
+// Pivot detection using highest/lowest over swing_len
+pivot_high_price = ta.highest(high, swing_len)
+pivot_low_price  = ta.lowest(low, swing_len)
+pivot_high_bar   = ta.highestbars(high, swing_len)
+pivot_low_bar    = ta.lowestbars(low, swing_len)
+
+// Keep last confirmed swing values (confirmed on barstate.isconfirmed)
+// Declare typed vars so later assignments to na or floats are valid
+var float last_swing_high = na
+var int   last_swing_high_bar = na
+var float last_swing_low = na
+var int   last_swing_low_bar = na
+var bool new_swing = false
+if barstate.isconfirmed
+    new_swing := false
+    if pivot_high_bar == 0
+        last_swing_high := pivot_high_price
+        last_swing_high_bar := bar_index
+        new_swing := true
+    if pivot_low_bar == 0
+        last_swing_low := pivot_low_price
+        last_swing_low_bar := bar_index
+        new_swing := true
+
+// BOS / CHoCH detection (confirmed-close based)
+bos_up  = not na(last_swing_high) and close > last_swing_high
+bos_down = not na(last_swing_low) and close < last_swing_low
+
+// smc_trend simple state stored last time a BOS changed
+var int smc_trend = 0  // 1 bull, -1 bear, 0 neutral
+if barstate.isconfirmed
+    if bos_up
+        smc_trend := 1
+    if bos_down
+        smc_trend := -1
+choch_up = bos_up and smc_trend == -1
+choch_down = bos_down and smc_trend == 1
+
+// FVG detection (limited lookback)
+// Declare typed persistent containers for fvg variables
+var float fvg_top = na
+var float fvg_bot = na
+var bool  fvg = false
+max_fvg_scan = math.min(search_lookback, 60)
+fvg := false
+fvg_top := na
+fvg_bot := na
+for i = 2 to max_fvg_scan
+    if bar_index > i + 1
+        bhi = math.max(open[i], close[i])
+        blo = math.min(open[i], close[i])
+        nhi = math.max(open[i-1], close[i-1])
+        nlo = math.min(open[i-1], close[i-1])
+        if nlo > bhi
+            fvg_top := nhi
+            fvg_bot := nlo
+            fvg := true
+            break
+        if nhi < blo
+            fvg_top := nlo
+            fvg_bot := nhi
+            fvg := true
+            break
+
+// Order block detection (bounded scan)
+// Declare typed persistent vars for OBs
+var float last_bull_ob_top = na
+var float last_bull_ob_bot = na
+var int   last_bull_ob_bar = na
+var float last_bear_ob_top = na
+var float last_bear_ob_bot = na
+var int   last_bear_ob_bar = na
+if barstate.isconfirmed
+    if bos_up or choch_up
+        found = false
+        max_scan = math.min(20, bar_index)
+        for i = 1 to max_scan
+            if found
+                break
+            if close[i] < open[i]
+                last_bull_ob_top := high[i]
+                last_bull_ob_bot := low[i]
+                last_bull_ob_bar := bar_index - i
+                found := true
+    if bos_down or choch_down
+        found2 = false
+        max_scan2 = math.min(20, bar_index)
+        for i = 1 to max_scan2
+            if found2
+                break
+            if close[i] > open[i]
+                last_bear_ob_top := high[i]
+                last_bear_ob_bot := low[i]
+                last_bear_ob_bar := bar_index - i
+                found2 := true
+
+// Liquidity sweep detection (simple)
+liquidity_sweep_up   = not na(last_swing_high) and high > last_swing_high and close < last_swing_high
+liquidity_sweep_down = not na(last_swing_low)  and low  < last_swing_low  and close > last_swing_low
+
+// Equal Highs/Lows detection (within small ATR tolerance)
+var bool eq_high = false
+var bool eq_low  = false
+if not na(last_swing_high)
+    eq_high := math.abs(pivot_high_price - last_swing_high) < 0.1 * atr
+if not na(last_swing_low)
+    eq_low  := math.abs(pivot_low_price - last_swing_low) < 0.1 * atr
+
+// Zones (premium/discount/equilibrium) from last confirmed swing range
+var float zone_premium_top = na
+var float zone_premium_bot = na
+var float zone_equ_top = na
+var float zone_equ_bot = na
+var float zone_discount_top = na
+var float zone_discount_bot = na
+if not na(last_swing_high) and not na(last_swing_low)
+    sr = last_swing_high - last_swing_low
+    zone_premium_top := last_swing_high
+    zone_premium_bot := last_swing_low + 0.618 * sr
+    zone_equ_top := last_swing_low + 0.382 * sr
+    zone_equ_bot := last_swing_low + 0.618 * sr
+    zone_discount_top := last_swing_low + 0.382 * sr
+    zone_discount_bot := last_swing_low
+
+in_premium = not na(zone_premium_bot) and close > zone_premium_bot and close <= zone_premium_top
+in_discount = not na(zone_discount_top) and close >= zone_discount_bot and close < zone_discount_top
+in_equil = not na(zone_equ_top) and close >= zone_equ_top and close <= zone_equ_bot
+
+
+// -------------------- Part 2/3 (Corrected) --------------------
+// ICT, Other Strategies, Confidence functions, helper utilities
+// This version fixes "Cannot modify global variable in function" by returning objects.
+
+// -------------------- OTHER STRATEGIES (compact) --------------------
+ma_cross_long = ta.crossover(fastMA, slowMA)
+ma_cross_short = ta.crossunder(fastMA, slowMA)
+trend_buy = ma_cross_long and adx_ok
+trend_sell = ma_cross_short and adx_ok
+break_long = close > don_hi[1] and vol_spike
+break_short = close < don_lo[1] and vol_spike
+rsi_val = ta.rsi(close, rsi_len)
+mean_long = rsi_val < 30 and close < bb_lo
+mean_short = rsi_val > 70 and close > bb_up
+squeeze_break_long = squeezeOn and close > bb_up
+squeeze_break_short = squeezeOn and close < bb_lo
+
+// Scalping (safe detection)
+is_scalp_tf = scalp_enable and (timeframe.period == "1" or timeframe.period == "5")
+scalp_long = is_scalp_tf and ta.crossover(ta.rsi(close, 3), 50) and ta.crossover(ta.ema(close, 5), ta.ema(close, 13)) and vol_spike
+scalp_short = is_scalp_tf and ta.crossunder(ta.rsi(close, 3), 50) and ta.crossunder(ta.ema(close, 5), ta.ema(close, 13)) and vol_spike
+
+// VWAP reclaim
+higher_lows = low > low[1] and low[1] > low[2]
+lower_highs = high < high[1] and high[1] < high[2]
+vwap_reclaim_long = not na(vwap_val) and close > vwap_val and close[1] < vwap_val and higher_lows
+vwap_reclaim_short = not na(vwap_val) and close < vwap_val and close[1] > vwap_val and lower_highs
+
+// Supply/Demand simple displacement detection
+dispBull = (close - open) > (1.5 * atr)
+dispBear = (open - close) > (1.5 * atr)
+var float sd_top = na
+var float sd_bot = na
+var int sd_bar = na
+if barstate.isconfirmed
+    if dispBull
+        sd_top := high
+        sd_bot := low
+        sd_bar := bar_index
+    if dispBear
+        sd_top := high
+        sd_bot := low
+        sd_bar := bar_index
+sd_retest_buy = not na(sd_bot) and low < sd_top and close > sd_bot and close > open
+sd_retest_sell = not na(sd_top) and high > sd_bot and close < sd_top and close < open
+
+// -------------------- ICT Timing / Killzones --------------------
+var bool wick_reject_high = false
+var bool wick_reject_low = false
+if in_london or in_ny
+    wick_reject_high := (high - math.max(open, close)) > (atr * 0.6)
+    wick_reject_low  := (math.min(open, close) - low) > (atr * 0.6)
+ict_long = wick_reject_low and (in_london or in_ny)
+ict_short = wick_reject_high and (in_london or in_ny)
+
+// -------------------- CONFIDENCE CALCS (compact, strategy-specific) --------------------
+f_smc_conf() =>
+    base = 50.0
+    ob_bonus = (not na(last_bull_ob_bar) or not na(last_bear_ob_bar)) ? 12.0 : 0.0
+    fvg_b = fvg ? 10.0 : 0.0
+    eq_b = (eq_high or eq_low) ? 8.0 : 0.0
+    zone_b = (in_discount or in_premium) ? 8.0 : 0.0
+    mtf_b = (htf_trend != 0) ? 8.0 : 0.0
+    sess_b = (in_london or in_ny) ? 5.0 : 0.0
+    tot = base + ob_bonus + fvg_b + eq_b + zone_b + mtf_b + sess_b
+    math.min(100.0, tot)
+
+f_trend_conf() =>
+    base = 45.0
+    adx_b = adx_ok ? math.min(20.0, adx_val / 2.0) : 0.0
+    mtf_b = (htf_trend != 0) ? 10.0 : 0.0
+    vol_b = vol_spike ? 8.0 : 0.0
+    math.min(100.0, base + adx_b + mtf_b + vol_b)
+
+f_break_conf() =>
+    base = 40.0
+    vol_b = vol_spike ? 20.0 : 0.0
+    mtf_b = (htf_trend != 0) ? 10.0 : 0.0
+    math.min(100.0, base + vol_b + mtf_b)
+
+f_mean_conf() =>
+    base = 35.0
+    rsi_b = (rsi_val < 20 or rsi_val > 80) ? 15.0 : 0.0
+    vwap_b = (vwap_reclaim_long or vwap_reclaim_short) ? 10.0 : 0.0
+    math.min(100.0, base + rsi_b + vwap_b)
+
+// -------------------- HELPER: Persistent objects (global vars) --------------------
+var label insightLabel = na
+var box bullOB_box = na
+var box bearOB_box = na
+var box fvg_box = na
+
+// -------------------- HELPER FUNCTIONS (return updated object) --------------------
+// Each function accepts the current object and returns the updated object.
+// This avoids modifying globals inside the function body.
+
+f_update_insight_label(_lbl, _bar, _y, _txt, _isLong) =>
+    lbl = _lbl
+    if na(lbl)
+        lbl := label.new(_bar, _y, _txt, style=_isLong ? label.style_label_up : label.style_label_down, color=_isLong ? color.new(color.green,0) : color.new(color.red,0), textcolor=color.white, size=size.small)
+    else
+        label.set_xy(lbl, _bar, _y)
+        label.set_text(lbl, _txt)
+    lbl
+
+f_clear_insight_label(_lbl) =>
+    lbl = _lbl
+    if not na(lbl)
+        label.delete(lbl)
+        lbl := na
+    lbl
+
+f_update_bull_ob(_box, _left, _top, _right, _bot) =>
+    b = _box
+    if na(b)
+        b := box.new(_left, _top, _right, _bot, border_color=color.new(color.blue,50), bgcolor=color.new(color.blue,90), extend=extend.right)
+    else
+        box.set_lefttop(b, _left, _top)
+        box.set_rightbottom(b, _right, _bot)
+    b
+
+f_clear_bull_ob(_box) =>
+    b = _box
+    if not na(b)
+        box.delete(b)
+        b := na
+    b
+
+f_update_bear_ob(_box, _left, _top, _right, _bot) =>
+    b = _box
+    if na(b)
+        b := box.new(_left, _top, _right, _bot, border_color=color.new(color.orange,50), bgcolor=color.new(color.orange,90), extend=extend.right)
+    else
+        box.set_lefttop(b, _left, _top)
+        box.set_rightbottom(b, _right, _bot)
+    b
+
+f_clear_bear_ob(_box) =>
+    b = _box
+    if not na(b)
+        box.delete(b)
+        b := na
+    b
+
+f_update_fvg(_box, _left, _top, _right, _bot) =>
+    b = _box
+    if na(b)
+        b := box.new(_left, _top, _right, _bot, border_color=color.new(color.yellow,50), bgcolor=color.new(color.yellow,92), extend=extend.right)
+    else
+        box.set_lefttop(b, _left, _top)
+        box.set_rightbottom(b, _right, _bot)
+    b
+
+f_clear_fvg(_box) =>
+    b = _box
+    if not na(b)
+        box.delete(b)
+        b := na
+    b
+
+// End of corrected Part 2
+
+// -------------------- PART 3 — SIGNAL AGG & INSIGHT ENGINE (Patched) --------------------
+
+// Ensure these persistent vars are typed so we can assign na safely
+var int    last_signal_bar = na
+var string last_strategy    = ""
+var string last_side        = ""
+var float  last_conf        = na
+var string last_struct      = ""
+var float  last_sl          = na
+var float  last_tp          = na
+var string last_regime      = ""
+
+// Regime simple label
+regime = adx_ok ? "Trending" : (squeezeOn ? "Consolidation" : "Neutral")
+
+// -------------------- INSIGHT TEXT GENERATOR --------------------
+f_build_insight(_strategy, _side, _conf, _regime, _struct) =>
+    dir = _side == "buy" ? "Bullish opportunity" : "Bearish opportunity"
+    sname = _strategy == "" ? "Market" : _strategy
+    conf_txt = "Confidence " + str.tostring(_conf, "#") + "%"
+    reg_txt = "Regime: " + _regime
+    stxt = "Structure: " + _struct
+    full = dir + " detected via " + sname + ".\n" + conf_txt + " • " + reg_txt + "\n" + stxt
+    full
+
+// -------------------- AGGREGATION: typed persistent variables --------------------
+var string activeStrategy = ""
+var bool   signalLong = false
+var bool   signalShort = false
+var string structureTag = ""
+var float  suggestedSL = na
+var float  suggestedTP = na
+var float  final_conf = na
+var string explain = ""
+
+// reset ephemeral per-bar (do not delete persistent objects)
+signalLong := false
+signalShort := false
+activeStrategy := ""
+structureTag := ""
+final_conf := na
+suggestedSL := na
+suggestedTP := na
+explain := ""
+
+// Use bar close confirmations to avoid repainting
+if barstate.isconfirmed and (last_signal_bar != bar_index)
+    // Priority: SMC
+    if (mode == "All" or mode == "SMC") and choch_up and not na(last_bull_ob_bot) and fvg and in_discount
+        activeStrategy := "SMC"
+        signalLong := true
+        structureTag := "CHOCH+OB+FVG"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := f_smc_conf()
+        explain := "SMC confluence"
+        last_signal_bar := bar_index
+    else if (mode == "All" or mode == "SMC") and choch_down and not na(last_bear_ob_top) and fvg and in_premium
+        activeStrategy := "SMC"
+        signalShort := true
+        structureTag := "CHOCH+OB+FVG"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := f_smc_conf()
+        explain := "SMC confluence"
+        last_signal_bar := bar_index
+
+    // ICT
+    if activeStrategy == "" and (mode == "All" or mode == "ICT") and ict_long
+        activeStrategy := "ICT"
+        signalLong := true
+        structureTag := "ICT-WickRej"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := math.min(100.0, 55 + (wick_reject_low ? 20 : 0))
+        explain := "ICT wick rejection"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "ICT") and ict_short
+        activeStrategy := "ICT"
+        signalShort := true
+        structureTag := "ICT-WickRej"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := math.min(100.0, 55 + (wick_reject_high ? 20 : 0))
+        explain := "ICT wick rejection"
+        last_signal_bar := bar_index
+
+    // Trend
+    if activeStrategy == "" and (mode == "All" or mode == "Trend") and trend_buy
+        activeStrategy := "Trend"
+        signalLong := true
+        structureTag := "Trend"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := f_trend_conf()
+        explain := "MA crossover + ADX"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "Trend") and trend_sell
+        activeStrategy := "Trend"
+        signalShort := true
+        structureTag := "Trend"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := f_trend_conf()
+        explain := "MA crossover + ADX"
+        last_signal_bar := bar_index
+
+    // Breakout
+    if activeStrategy == "" and (mode == "All" or mode == "Breakout") and break_long
+        activeStrategy := "Breakout"
+        signalLong := true
+        structureTag := "Breakout"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := f_break_conf()
+        explain := "Donchian breakout + vol"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "Breakout") and break_short
+        activeStrategy := "Breakout"
+        signalShort := true
+        structureTag := "Breakout"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := f_break_conf()
+        explain := "Donchian breakout + vol"
+        last_signal_bar := bar_index
+
+    // Mean Reversion
+    if activeStrategy == "" and (mode == "All" or mode == "MeanReversion") and mean_long
+        activeStrategy := "MeanReversion"
+        signalLong := true
+        structureTag := "MeanRev"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := f_mean_conf()
+        explain := "RSI extreme + BB touch"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "MeanReversion") and mean_short
+        activeStrategy := "MeanReversion"
+        signalShort := true
+        structureTag := "MeanRev"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := f_mean_conf()
+        explain := "RSI extreme + BB touch"
+        last_signal_bar := bar_index
+
+    // Squeeze
+    if activeStrategy == "" and (mode == "All" or mode == "Squeeze") and squeeze_break_long
+        activeStrategy := "Squeeze"
+        signalLong := true
+        structureTag := "Squeeze"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := 55
+        explain := "Squeeze breakout"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "Squeeze") and squeeze_break_short
+        activeStrategy := "Squeeze"
+        signalShort := true
+        structureTag := "Squeeze"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := 55
+        explain := "Squeeze breakout"
+        last_signal_bar := bar_index
+
+    // VWAP
+    if activeStrategy == "" and (mode == "All" or mode == "VWAP") and vwap_reclaim_long
+        activeStrategy := "VWAP"
+        signalLong := true
+        structureTag := "VWAPReclaim"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := 60
+        explain := "VWAP reclaim"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "VWAP") and vwap_reclaim_short
+        activeStrategy := "VWAP"
+        signalShort := true
+        structureTag := "VWAPReclaim"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := 60
+        explain := "VWAP reclaim"
+        last_signal_bar := bar_index
+
+    // Supply/Demand
+    if activeStrategy == "" and (mode == "All" or mode == "SupplyDemand") and sd_retest_buy
+        activeStrategy := "SupplyDemand"
+        signalLong := true
+        structureTag := "SD-Retest"
+        suggestedSL := close - atr * 1.5
+        suggestedTP := close + atr * 3.0
+        final_conf := 60
+        explain := "SD retest"
+        last_signal_bar := bar_index
+    else if activeStrategy == "" and (mode == "All" or mode == "SupplyDemand") and sd_retest_sell
+        activeStrategy := "SupplyDemand"
+        signalShort := true
+        structureTag := "SD-Retest"
+        suggestedSL := close + atr * 1.5
+        suggestedTP := close - atr * 3.0
+        final_conf := 60
+        explain := "SD retest"
+        last_signal_bar := bar_index
+
+// -------------------- RENDER INSIGHT CARD --------------------
+should_show = (activeStrategy != "") and (not na(final_conf)) and (final_conf >= min_confidence)
+if should_show
+    side_txt = signalLong ? "buy" : "sell"
+    insightText = f_build_insight(activeStrategy, side_txt, math.round(final_conf), regime, structureTag)
+    yloc_val = signalLong ? low : high
+    // NOTE: functions return updated object; assign back to globals (declared in Part 2)
+    insightLabel := f_update_insight_label(insightLabel, bar_index, yloc_val, insightText, signalLong)
+else
+    // clear existing label if no active insight
+    insightLabel := f_clear_insight_label(insightLabel)
+
+// -------------------- PLOTS FOR WEBHOOK MAPPING --------------------
+// plot_0 = SL, plot_1 = TP, plot_2 = Confidence
+plot(should_show ? suggestedSL : na, "Stop Loss", color=color.red, display=display.none)
+plot(should_show ? suggestedTP : na, "Take Profit", color=color.green, display=display.none)
+plot(should_show ? final_conf : na, "Confidence", color=color.blue, display=display.none)
+
+// -------------------- ALERT (static) + debug JSON (single-line construction) --------------------
+alertcondition(should_show, title="ZenithEdge PRO Insight (static)", message="ZenithEdge PRO Insight - check chart debug label for JSON")
+
+if should_show and show_debug and barstate.isconfirmed
+    dbg_json = '{' + '"side":"' + (signalLong ? "buy" : "sell") + '",' + '"strategy":"' + activeStrategy + '",' + '"price":' + str.tostring(close) + ',"conf":' + str.tostring(final_conf) + '}'
+    dbg_text = str.length(dbg_json) > 300 ? str.substring(dbg_json, 0, 300) + "..." : dbg_json
+    var label dbg_label = na
+    if na(dbg_label)
+        dbg_label := label.new(bar_index, high, dbg_text, style=label.style_label_left, color=color.new(color.gray, 85), textcolor=color.white, size=size.tiny)
+    else
+        label.set_xy(dbg_label, bar_index, high)
+        label.set_text(dbg_label, dbg_text)
+
+// -------------------- CLEANUP: expire stale insights --------------------
+if barstate.isconfirmed and not na(last_signal_bar) and bar_index - last_signal_bar > visual_max_age
+    // clear ephemeral fields and UI
+    insightLabel := f_clear_insight_label(insightLabel)
+    last_signal_bar := na
+    activeStrategy := ""
+    final_conf := na
+    suggestedSL := na
+    suggestedTP := na
+    explain := ""
+
+// -------------------- END PART 3 --------------------

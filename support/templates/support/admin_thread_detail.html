@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Ticket #{{ thread.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body{background:linear-gradient(135deg,#0a0e27,#1a1f3a);color:#e0e0e0;min-height:100vh}
+        .navbar{background:rgba(10,14,39,.95);border-bottom:1px solid rgba(0,212,255,.2)}
+        .navbar-brand{font-weight:700;color:#00d4ff!important}
+        .chat-container{max-width:1000px;margin:2rem auto;background:rgba(26,31,58,.7);border-radius:15px;padding:2rem;border:1px solid rgba(0,212,255,.2)}
+        .message-bubble{padding:1rem;border-radius:12px;margin-bottom:1rem;max-width:75%}
+        .message-user{background:rgba(0,212,255,.1);border-left:3px solid #00d4ff}
+        .message-admin{background:rgba(40,167,69,.1);border-left:3px solid #28a745;margin-left:auto}
+        .form-control{background:rgba(10,14,39,.8);border:1px solid rgba(0,212,255,.3);color:#e0e0e0}
+        .btn-success{background:linear-gradient(135deg,#28a745,#1e7e34);border:none}
+        .user-info{background:rgba(0,212,255,.05);border-radius:8px;padding:1rem;margin-bottom:1rem;border-left:3px solid #00d4ff}
+        .signal-context{background:rgba(255,193,7,.05);border-radius:8px;padding:1rem;margin-bottom:1rem;border-left:3px solid #ffc107}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'support:admin_inbox' %}"><i class="bi bi-shield-check"></i> Support Admin</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'support:admin_inbox' %}"><i class="bi bi-arrow-left"></i> Back to Inbox</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 style="color:#00d4ff">Ticket #{{ thread.id }}: {{ thread.subject }}</h3>
+                <span class="badge {% if thread.status == 'closed' %}bg-secondary{% else %}bg-warning{% endif %}">{{ thread.get_status_display }}</span>
+            </div>
+            <div>
+                {% if thread.status != 'closed' %}
+                <button onclick="closeTicket()" class="btn btn-sm btn-secondary"><i class="bi bi-x-circle"></i> Close Ticket</button>
+                {% else %}
+                <button onclick="reopenTicket()" class="btn btn-sm btn-info"><i class="bi bi-arrow-clockwise"></i> Reopen</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="user-info">
+            <h6><i class="bi bi-person"></i> User Information</h6>
+            <div><strong>Email:</strong> {{ thread.user.email }}</div>
+            <div><strong>Opened:</strong> {{ thread.created_at|date:"M d, Y H:i" }}</div>
+            <div><strong>Last Activity:</strong> {{ thread.last_message_at|date:"M d, Y H:i" }}</div>
+        </div>
+
+        {% if signal %}
+        <div class="signal-context">
+            <h6><i class="bi bi-graph-up"></i> Related Trade Context</h6>
+            <div class="row">
+                <div class="col-md-4"><strong>Signal #{{ signal.id }}:</strong> {{ signal.symbol }} {{ signal.side|upper }}</div>
+                <div class="col-md-4"><strong>Entry:</strong> {{ signal.price|default:"N/A" }}</div>
+                <div class="col-md-4"><strong>SL/TP:</strong> {{ signal.sl }} / {{ signal.tp }}</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-4"><strong>Strategy:</strong> {{ signal.strategy }}</div>
+                <div class="col-md-4"><strong>Timeframe:</strong> {{ signal.timeframe|default:"N/A" }}</div>
+                <div class="col-md-4"><a href="{% url 'signals:trade_replay' signal.id %}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-play"></i> Replay</a></div>
+            </div>
+            {% if journal %}
+            <div class="mt-2"><strong>Journal:</strong> {{ journal.notes|default:"No notes" }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="messages-container">
+            {% for msg in messages %}
+            <div class="message-bubble {% if msg.is_admin_message %}message-admin{% else %}message-user{% endif %}">
+                <div><strong>{% if msg.is_admin_message %}Admin ({{ msg.from_user.email }}){% else %}{{ thread.user.email }}{% endif %}</strong></div>
+                <div>{{ msg.message|linebreaks }}</div>
+                {% if msg.attachment %}
+                <div class="mt-2"><a href="{{ msg.attachment.url }}" target="_blank" class="text-warning"><i class="bi bi-paperclip"></i> View Attachment</a></div>
+                {% endif %}
+                <div style="font-size:.85rem;color:#888;margin-top:.5rem">{{ msg.created_at|date:"M d, Y H:i" }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if thread.status != 'closed' %}
+        <form id="adminReplyForm" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                <textarea class="form-control" name="message" rows="4" placeholder="Type your response..." required></textarea>
+            </div>
+            <div class="mb-3">
+                <input type="file" class="form-control" name="attachment">
+                <small class="text-muted">Optional: Attach a file</small>
+            </div>
+            <button type="submit" class="btn btn-success"><i class="bi bi-send"></i> Send Reply</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('adminReplyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('{% url "support:admin_send_message" thread.id %}', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) location.reload();
+                else alert('Error sending message');
+            } catch (error) {
+                alert('Error sending message');
+            }
+        });
+
+        async function closeTicket() {
+            if (!confirm('Close this ticket?')) return;
+            try {
+                const response = await fetch('{% url "support:admin_close_thread" thread.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                if (response.ok) location.reload();
+            } catch (error) {
+                alert('Error closing ticket');
+            }
+        }
+
+        async function reopenTicket() {
+            try {
+                const response = await fetch('{% url "support:admin_reopen_thread" thread.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                if (response.ok) location.reload();
+            } catch (error) {
+                alert('Error reopening ticket');
+            }
+        }
+    </script>
+</body>
+</html>

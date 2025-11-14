@@ -1,0 +1,37 @@
+{% extends 'admin_dashboard/base_module.html' %}
+{% block title %}Risk Controls - Admin Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="bi bi-shield-exclamation"></i> Risk Control Management</h2>
+            <p class="text-muted mb-0">Monitor and manage user risk controls</p>
+        </div>
+        <a href="{% url 'admin_dashboard:dashboard' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+</div>
+<div class="stats-bar">
+    <div class="stat-card"><i class="bi bi-shield stat-icon text-info"></i><div class="stat-content"><h3>{{ total_count }}</h3><p>Total Controls</p></div></div>
+    <div class="stat-card"><i class="bi bi-check-circle stat-icon text-success"></i><div class="stat-content"><h3>{{ active_count }}</h3><p>Active</p></div></div>
+    <div class="stat-card"><i class="bi bi-exclamation-circle stat-icon text-danger"></i><div class="stat-content"><h3>{{ halted_count }}</h3><p>Halted</p></div></div>
+</div>
+<div class="data-table-container">
+    <table class="table table-dark table-hover mb-0">
+        <thead><tr><th>User</th><th>Status</th><th>Max Losers</th><th>Max Daily Trades</th><th>Max Red Signals</th><th>Halt Status</th><th>Updated</th></tr></thead>
+        <tbody>
+            {% for rc in risk_controls %}
+            <tr>
+                <td>{{ rc.user.email }}</td>
+                <td>{% if rc.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</td>
+                <td><span class="badge bg-warning">{{ rc.max_consecutive_losers }}</span></td>
+                <td><span class="badge bg-info">{{ rc.max_daily_trades }}</span></td>
+                <td><span class="badge bg-danger">{{ rc.max_red_signals_per_day }}</span></td>
+                <td>{% if rc.is_halted %}<span class="badge bg-danger"><i class="bi bi-stop-circle"></i> Halted</span>{% else %}<span class="badge bg-success"><i class="bi bi-play-circle"></i> Running</span>{% endif %}</td>
+                <td><small>{{ rc.updated_at|date:"M d, H:i" }}</small></td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="text-center py-5"><i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i><p class="mt-3 text-muted">No risk controls found</p></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

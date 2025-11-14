@@ -1,0 +1,91 @@
+{% extends 'admin_dashboard/base_module.html' %}
+
+{% block module_title %}PropCoach Challenges{% endblock %}
+
+{% block stats_cards %}
+<div class="col-md-3 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="stat-label">Total Challenges</div>
+    </div>
+</div>
+<div class="col-md-3 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ active_count }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+</div>
+<div class="col-md-3 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ passed_count }}</div>
+        <div class="stat-label">Passed</div>
+    </div>
+</div>
+<div class="col-md-3 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">{{ failed_count }}</div>
+        <div class="stat-label">Failed</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block table_content %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Template</th>
+            <th>Status</th>
+            <th>Balance</th>
+            <th>P&L</th>
+            <th>Total Trades</th>
+            <th>Win Rate</th>
+            <th>Started</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for challenge in challenges %}
+        <tr>
+            <td>{{ challenge.user.email|truncatechars:25 }}</td>
+            <td>{{ challenge.template.template_name|default:"—" }}</td>
+            <td>
+                {% if challenge.status == 'active' %}
+                    <span class="badge bg-success">Active</span>
+                {% elif challenge.status == 'passed' %}
+                    <span class="badge bg-primary">Passed</span>
+                {% elif challenge.status == 'failed' %}
+                    <span class="badge bg-danger">Failed</span>
+                {% elif challenge.status == 'paused' %}
+                    <span class="badge bg-warning">Paused</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ challenge.status|title }}</span>
+                {% endif %}
+            </td>
+            <td>${{ challenge.current_balance|floatformat:2 }}</td>
+            <td>
+                {% if challenge.total_profit_loss > 0 %}
+                    <span class="text-success">+${{ challenge.total_profit_loss|floatformat:2 }}</span>
+                {% elif challenge.total_profit_loss < 0 %}
+                    <span class="text-danger">${{ challenge.total_profit_loss|floatformat:2 }}</span>
+                {% else %}
+                    <span class="text-muted">$0.00</span>
+                {% endif %}
+            </td>
+            <td>{{ challenge.total_trades|default:0 }}</td>
+            <td>
+                {% if challenge.win_rate %}
+                    {{ challenge.win_rate|floatformat:1 }}%
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>{{ challenge.start_date|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center text-muted">No challenges found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

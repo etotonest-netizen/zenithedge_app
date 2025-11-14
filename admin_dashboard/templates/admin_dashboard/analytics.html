@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Analytics - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+        
+        .chart-container {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'admin_dashboard:dashboard' %}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            <div class="btn-group">
+                <a href="?days=7" class="btn btn-outline-primary {% if days == 7 %}active{% endif %}">7 Days</a>
+                <a href="?days=30" class="btn btn-outline-primary {% if days == 30 %}active{% endif %}">30 Days</a>
+                <a href="?days=90" class="btn btn-outline-primary {% if days == 90 %}active{% endif %}">90 Days</a>
+            </div>
+        </div>
+        
+        <h2 class="text-white mb-4"><i class="bi bi-graph-up"></i> System Analytics</h2>
+        
+        <!-- User Growth Chart -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5 class="text-white mb-3"><i class="bi bi-people"></i> User Growth</h5>
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5 class="text-white mb-3"><i class="bi bi-broadcast"></i> Signal Volume</h5>
+                    <canvas id="signalVolumeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Chart -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="text-white mb-3"><i class="bi bi-bar-chart"></i> Trading Performance</h5>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // User Growth Chart
+        const userGrowthData = {{ user_growth|safe }};
+        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        new Chart(userGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: userGrowthData.map(d => d.day),
+                datasets: [{
+                    label: 'New Users',
+                    data: userGrowthData.map(d => d.count),
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                }
+            }
+        });
+        
+        // Signal Volume Chart
+        const signalVolumeData = {{ signal_volume|safe }};
+        const signalVolumeCtx = document.getElementById('signalVolumeChart').getContext('2d');
+        new Chart(signalVolumeCtx, {
+            type: 'bar',
+            data: {
+                labels: signalVolumeData.map(d => d.day),
+                datasets: [{
+                    label: 'Signals',
+                    data: signalVolumeData.map(d => d.count),
+                    backgroundColor: '#2196F3'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                }
+            }
+        });
+        
+        // Performance Chart
+        const performanceData = {{ performance_data|safe }};
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: performanceData.map(d => d.day),
+                datasets: [
+                    {
+                        label: 'Wins',
+                        data: performanceData.map(d => d.wins),
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Losses',
+                        data: performanceData.map(d => d.losses),
+                        borderColor: '#F44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

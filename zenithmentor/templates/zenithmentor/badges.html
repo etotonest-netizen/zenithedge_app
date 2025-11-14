@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badges - ZenithMentor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        .badges-header { background: linear-gradient(135deg, #0f3460 0%, #16537e 100%); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; }
+        .badge-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 1.5rem; transition: all 0.3s; height: 100%; }
+        .badge-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .badge-card.earned { border: 2px solid #4CAF50; background: rgba(76,175,80,0.1); }
+        .badge-card.locked { opacity: 0.5; }
+        .badge-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .category-section { margin-bottom: 3rem; }
+        .progress-stats { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'zenithmentor:dashboard' %}">
+                <i class="bi bi-mortarboard-fill"></i> ZenithMentor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:dashboard' %}"><i class="bi bi-house-fill"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:curriculum' %}"><i class="bi bi-book-fill"></i> Curriculum</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'zenithmentor:badges' %}"><i class="bi bi-award-fill"></i> Badges</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="badges-header">
+            <h1><i class="bi bi-award-fill"></i> Achievement Badges</h1>
+            <p class="mb-3">Track your progress and unlock achievements</p>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <div class="progress-stats">
+                        <h3 class="text-success">{{ earned_count }}</h3>
+                        <small class="text-muted">Earned</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="progress-stats">
+                        <h3 class="text-warning">{{ total_count }}</h3>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="progress-stats">
+                        <h3 class="text-info">{{ completion_percentage|floatformat:0 }}%</h3>
+                        <small class="text-muted">Complete</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="progress-stats">
+                        <h3 class="text-primary">{{ recent_count }}</h3>
+                        <small class="text-muted">Recent (7d)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discipline Badges -->
+        {% if discipline_badges %}
+        <div class="category-section">
+            <h3 class="mb-3"><i class="bi bi-shield-fill-check text-primary"></i> Discipline Badges</h3>
+            <p class="text-muted mb-3">Earned through consistent risk management and journaling</p>
+            <div class="row">
+                {% for badge_info in discipline_badges %}
+                <div class="col-md-4 mb-4">
+                    <div class="badge-card {% if badge_info.earned %}earned{% else %}locked{% endif %}">
+                        <div class="text-center">
+                            <div class="badge-icon" style="color: {{ badge_info.badge.color }};">
+                                <i class="bi bi-{{ badge_info.badge.icon_name }}"></i>
+                            </div>
+                            <h5>{{ badge_info.badge.name }}</h5>
+                            {% if badge_info.earned %}
+                                <span class="badge bg-success mb-2"><i class="bi bi-check-circle-fill"></i> Earned</span>
+                                <p class="text-muted small mb-0">{{ badge_info.awarded_at|date:"M d, Y" }}</p>
+                            {% else %}
+                                <span class="badge bg-secondary mb-2"><i class="bi bi-lock-fill"></i> Locked</span>
+                            {% endif %}
+                            <p class="mt-3">{{ badge_info.badge.description }}</p>
+                            
+                            {% if not badge_info.earned %}
+                            <div class="mt-3">
+                                <small class="text-warning"><strong>Requirements:</strong></small>
+                                <ul class="list-unstyled small text-start mt-2">
+                                    {% if badge_info.badge.requirement_criteria.min_scenarios_passed %}
+                                    <li><i class="bi bi-check-circle"></i> Pass {{ badge_info.badge.requirement_criteria.min_scenarios_passed }} scenarios</li>
+                                    {% endif %}
+                                    {% if badge_info.badge.requirement_criteria.min_discipline_score %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_discipline_score }}+ discipline score</li>
+                                    {% endif %}
+                                    {% if badge_info.badge.requirement_criteria.min_journal_quality %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_journal_quality }}+ journal quality</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Performance Badges -->
+        {% if performance_badges %}
+        <div class="category-section">
+            <h3 class="mb-3"><i class="bi bi-graph-up-arrow text-success"></i> Performance Badges</h3>
+            <p class="text-muted mb-3">Earned through profitable trading and high win rates</p>
+            <div class="row">
+                {% for badge_info in performance_badges %}
+                <div class="col-md-4 mb-4">
+                    <div class="badge-card {% if badge_info.earned %}earned{% else %}locked{% endif %}">
+                        <div class="text-center">
+                            <div class="badge-icon" style="color: {{ badge_info.badge.color }};">
+                                <i class="bi bi-{{ badge_info.badge.icon_name }}"></i>
+                            </div>
+                            <h5>{{ badge_info.badge.name }}</h5>
+                            {% if badge_info.earned %}
+                                <span class="badge bg-success mb-2"><i class="bi bi-check-circle-fill"></i> Earned</span>
+                                <p class="text-muted small mb-0">{{ badge_info.awarded_at|date:"M d, Y" }}</p>
+                            {% else %}
+                                <span class="badge bg-secondary mb-2"><i class="bi bi-lock-fill"></i> Locked</span>
+                            {% endif %}
+                            <p class="mt-3">{{ badge_info.badge.description }}</p>
+                            
+                            {% if not badge_info.earned %}
+                            <div class="mt-3">
+                                <small class="text-warning"><strong>Requirements:</strong></small>
+                                <ul class="list-unstyled small text-start mt-2">
+                                    {% if badge_info.badge.requirement_criteria.min_scenarios_passed %}
+                                    <li><i class="bi bi-check-circle"></i> Pass {{ badge_info.badge.requirement_criteria.min_scenarios_passed }} scenarios</li>
+                                    {% endif %}
+                                    {% if badge_info.badge.requirement_criteria.min_expectancy %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_expectancy }}R+ expectancy</li>
+                                    {% endif %}
+                                    {% if badge_info.badge.requirement_criteria.min_win_rate %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_win_rate }}%+ win rate</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Consistency Badges -->
+        {% if consistency_badges %}
+        <div class="category-section">
+            <h3 class="mb-3"><i class="bi bi-lightning-fill text-warning"></i> Consistency Badges</h3>
+            <p class="text-muted mb-3">Earned through consistent performance and risk management</p>
+            <div class="row">
+                {% for badge_info in consistency_badges %}
+                <div class="col-md-4 mb-4">
+                    <div class="badge-card {% if badge_info.earned %}earned{% else %}locked{% endif %}">
+                        <div class="text-center">
+                            <div class="badge-icon" style="color: {{ badge_info.badge.color }};">
+                                <i class="bi bi-{{ badge_info.badge.icon_name }}"></i>
+                            </div>
+                            <h5>{{ badge_info.badge.name }}</h5>
+                            {% if badge_info.earned %}
+                                <span class="badge bg-success mb-2"><i class="bi bi-check-circle-fill"></i> Earned</span>
+                                <p class="text-muted small mb-0">{{ badge_info.awarded_at|date:"M d, Y" }}</p>
+                            {% else %}
+                                <span class="badge bg-secondary mb-2"><i class="bi bi-lock-fill"></i> Locked</span>
+                            {% endif %}
+                            <p class="mt-3">{{ badge_info.badge.description }}</p>
+                            
+                            {% if not badge_info.earned %}
+                            <div class="mt-3">
+                                <small class="text-warning"><strong>Requirements:</strong></small>
+                                <ul class="list-unstyled small text-start mt-2">
+                                    {% if badge_info.badge.requirement_criteria.min_consecutive_wins %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_consecutive_wins }} consecutive wins</li>
+                                    {% endif %}
+                                    {% if badge_info.badge.requirement_criteria.min_risk_consistency %}
+                                    <li><i class="bi bi-check-circle"></i> {{ badge_info.badge.requirement_criteria.min_risk_consistency }}+ risk consistency</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Mastery Badges -->
+        {% if mastery_badges %}
+        <div class="category-section">
+            <h3 class="mb-3"><i class="bi bi-gem text-info"></i> Mastery Badges</h3>
+            <p class="text-muted mb-3">Earned through strategy-specific expertise</p>
+            <div class="row">
+                {% for badge_info in mastery_badges %}
+                <div class="col-md-4 mb-4">
+                    <div class="badge-card {% if badge_info.earned %}earned{% else %}locked{% endif %}">
+                        <div class="text-center">
+                            <div class="badge-icon" style="color: {{ badge_info.badge.color }};">
+                                <i class="bi bi-{{ badge_info.badge.icon_name }}"></i>
+                            </div>
+                            <h5>{{ badge_info.badge.name }}</h5>
+                            {% if badge_info.earned %}
+                                <span class="badge bg-success mb-2"><i class="bi bi-check-circle-fill"></i> Earned</span>
+                                <p class="text-muted small mb-0">{{ badge_info.awarded_at|date:"M d, Y" }}</p>
+                            {% else %}
+                                <span class="badge bg-secondary mb-2"><i class="bi bi-lock-fill"></i> Locked</span>
+                            {% endif %}
+                            <p class="mt-3">{{ badge_info.badge.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ultimate Badge -->
+        {% if ultimate_badge %}
+        <div class="category-section">
+            <h3 class="mb-3"><i class="bi bi-trophy-fill text-danger"></i> Ultimate Achievement</h3>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="badge-card {% if ultimate_badge.earned %}earned{% else %}locked{% endif %}" style="border: 3px solid #FFD700;">
+                        <div class="text-center">
+                            <div class="badge-icon" style="color: {{ ultimate_badge.badge.color }}; font-size: 6rem;">
+                                <i class="bi bi-{{ ultimate_badge.badge.icon_name }}"></i>
+                            </div>
+                            <h3>{{ ultimate_badge.badge.name }}</h3>
+                            {% if ultimate_badge.earned %}
+                                <span class="badge bg-success mb-2" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                                    <i class="bi bi-check-circle-fill"></i> Earned
+                                </span>
+                                <p class="text-muted mb-0">{{ ultimate_badge.awarded_at|date:"M d, Y" }}</p>
+                                <p class="mt-3 fw-bold text-warning">🎉 Congratulations! You've mastered the ZenithMentor curriculum! 🎉</p>
+                            {% else %}
+                                <span class="badge bg-secondary mb-2" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                                    <i class="bi bi-lock-fill"></i> Locked
+                                </span>
+                            {% endif %}
+                            <p class="mt-3">{{ ultimate_badge.badge.description }}</p>
+                            
+                            {% if not ultimate_badge.earned %}
+                            <div class="mt-4">
+                                <h5 class="text-warning">Certification Requirements:</h5>
+                                <ul class="list-unstyled text-start mt-3">
+                                    {% if ultimate_badge.badge.requirement_criteria.lessons_completed %}
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Complete {{ ultimate_badge.badge.requirement_criteria.lessons_completed }} lessons</li>
+                                    {% endif %}
+                                    {% if ultimate_badge.badge.requirement_criteria.total_scenarios %}
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Pass {{ ultimate_badge.badge.requirement_criteria.total_scenarios }} scenarios</li>
+                                    {% endif %}
+                                    {% if ultimate_badge.badge.requirement_criteria.min_expectancy %}
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Achieve {{ ultimate_badge.badge.requirement_criteria.min_expectancy }}R+ expectancy</li>
+                                    {% endif %}
+                                    {% if ultimate_badge.badge.requirement_criteria.min_discipline_score %}
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Maintain {{ ultimate_badge.badge.requirement_criteria.min_discipline_score }}+ discipline score</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

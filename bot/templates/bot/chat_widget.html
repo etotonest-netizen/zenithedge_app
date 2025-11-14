@@ -1,0 +1,456 @@
+<!-- ZenBot Chat Widget -->
+<!-- Include this in your base template or specific pages -->
+<style>
+    #zenbot-widget {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    #zenbot-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #zenbot-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+    
+    #zenbot-button.active {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    
+    #zenbot-chat-window {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 380px;
+        height: 550px;
+        background: #1a1f3a;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    #zenbot-chat-window.open {
+        display: flex;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    #zenbot-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    #zenbot-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    #zenbot-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    #zenbot-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    #zenbot-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: #0a0e27;
+    }
+    
+    .zenbot-message {
+        margin-bottom: 16px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .zenbot-message.user {
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .zenbot-message.bot {
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .zenbot-message-content {
+        max-width: 75%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+    
+    .zenbot-message.user .zenbot-message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .zenbot-message.bot .zenbot-message-content {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e9ecef;
+        border-bottom-left-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .zenbot-typing {
+        display: none;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 75%;
+    }
+    
+    .zenbot-typing.show {
+        display: inline-block;
+    }
+    
+    .zenbot-typing-dots {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .zenbot-typing-dots span {
+        width: 8px;
+        height: 8px;
+        background: #adb5bd;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+    
+    .zenbot-typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .zenbot-typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+    
+    #zenbot-input-area {
+        padding: 16px;
+        background: #1a1f3a;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        gap: 8px;
+    }
+    
+    #zenbot-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: white;
+        font-size: 14px;
+        resize: none;
+        max-height: 100px;
+    }
+    
+    #zenbot-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    #zenbot-send {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: transform 0.2s;
+    }
+    
+    #zenbot-send:hover {
+        transform: scale(1.05);
+    }
+    
+    #zenbot-send:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .zenbot-quick-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+    
+    .zenbot-quick-btn {
+        background: rgba(102, 126, 234, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.5);
+        color: #667eea;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .zenbot-quick-btn:hover {
+        background: rgba(102, 126, 234, 0.3);
+        border-color: #667eea;
+    }
+</style>
+
+<div id="zenbot-widget">
+    <!-- Chat Toggle Button -->
+    <button id="zenbot-button" title="Chat with ZenBot">
+        💬
+    </button>
+    
+    <!-- Chat Window -->
+    <div id="zenbot-chat-window">
+        <div id="zenbot-header">
+            <h3>🤖 ZenBot Assistant</h3>
+            <button id="zenbot-close">&times;</button>
+        </div>
+        
+        <div id="zenbot-messages">
+            <div class="zenbot-message bot">
+                <div class="zenbot-message-content">
+                    👋 Hi! I'm ZenBot, your trading assistant. Ask me about:
+                    <div class="zenbot-quick-actions">
+                        <button class="zenbot-quick-btn" data-query="What are my trading statistics?">📊 My Stats</button>
+                        <button class="zenbot-quick-btn" data-query="What is my challenge status?">🏆 Challenge</button>
+                        <button class="zenbot-quick-btn" data-query="What is my risk status?">⚠️ Risk Status</button>
+                        <button class="zenbot-quick-btn" data-query="Show my recent trades">📈 Recent Trades</button>
+                    </div>
+                </div>
+            </div>
+            <div class="zenbot-message bot" style="display: none;">
+                <div class="zenbot-typing">
+                    <div class="zenbot-typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="zenbot-input-area">
+            <textarea id="zenbot-input" 
+                      placeholder="Ask me anything..." 
+                      rows="1"></textarea>
+            <button id="zenbot-send">
+                ➤
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const widget = document.getElementById('zenbot-widget');
+    const button = document.getElementById('zenbot-button');
+    const chatWindow = document.getElementById('zenbot-chat-window');
+    const closeBtn = document.getElementById('zenbot-close');
+    const messagesContainer = document.getElementById('zenbot-messages');
+    const input = document.getElementById('zenbot-input');
+    const sendBtn = document.getElementById('zenbot-send');
+    const typingIndicator = messagesContainer.querySelector('.zenbot-typing').parentElement;
+    
+    let sessionId = generateSessionId();
+    
+    // Toggle chat window
+    button.addEventListener('click', () => {
+        chatWindow.classList.toggle('open');
+        button.classList.toggle('active');
+        if (chatWindow.classList.contains('open')) {
+            input.focus();
+            scrollToBottom();
+        }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        chatWindow.classList.remove('open');
+        button.classList.remove('active');
+    });
+    
+    // Send message
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Quick action buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('zenbot-quick-btn')) {
+            const query = e.target.getAttribute('data-query');
+            input.value = query;
+            sendMessage();
+        }
+    });
+    
+    async function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addMessage('user', message);
+        input.value = '';
+        input.style.height = 'auto';
+        
+        // Show typing indicator
+        typingIndicator.style.display = 'flex';
+        typingIndicator.querySelector('.zenbot-typing').classList.add('show');
+        scrollToBottom();
+        
+        // Disable input
+        sendBtn.disabled = true;
+        input.disabled = true;
+        
+        try {
+            const response = await fetch('/bot/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: sessionId
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            typingIndicator.style.display = 'none';
+            typingIndicator.querySelector('.zenbot-typing').classList.remove('show');
+            
+            if (data.success) {
+                addMessage('bot', data.response);
+            } else {
+                console.error('Server error:', data);
+                addMessage('bot', `Error: ${data.error || 'Something went wrong. Check console for details.'}`);
+            }
+        } catch (error) {
+            typingIndicator.style.display = 'none';
+            typingIndicator.querySelector('.zenbot-typing').classList.remove('show');
+            addMessage('bot', 'Sorry, I encountered an error: ' + error.message + '. Please check the console for details.');
+            console.error('ZenBot error:', error);
+            console.error('Error details:', error);
+        } finally {
+            // Re-enable input
+            sendBtn.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+    }
+    
+    function addMessage(type, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `zenbot-message ${type}`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'zenbot-message-content';
+        contentDiv.textContent = text;
+        
+        messageDiv.appendChild(contentDiv);
+        messagesContainer.insertBefore(messageDiv, typingIndicator);
+        scrollToBottom();
+    }
+    
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function generateSessionId() {
+        return 'zenbot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Auto-resize textarea
+    input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+})();
+</script>

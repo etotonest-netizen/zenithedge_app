@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenBot Admin Panel - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'signals:dashboard' %}">
+                <i class="bi bi-graph-up-arrow"></i> ZenithEdge
+            </a>
+            <div class="ms-auto">
+                <a href="/admin/" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-gear"></i> Django Admin
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h1 class="display-4 text-white">
+                <i class="bi bi-robot"></i> ZenBot Admin Panel
+            </h1>
+            <p class="lead text-muted">Manage bot settings, Q&As, and training</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="bi bi-chat-dots text-primary" style="font-size: 2rem;"></i>
+                    <div class="stat-value text-primary">{{ total_qas }}</div>
+                    <div class="text-muted">Active Q&As</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="bi bi-chat-left-text text-success" style="font-size: 2rem;"></i>
+                    <div class="stat-value text-success">{{ total_conversations }}</div>
+                    <div class="text-muted">Total Conversations</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="bi bi-speedometer2 text-warning" style="font-size: 2rem;"></i>
+                    <div class="stat-value text-warning">{{ settings.match_threshold|floatformat:0 }}%</div>
+                    <div class="text-muted">Match Threshold</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="bi bi-toggles text-info" style="font-size: 2rem;"></i>
+                    <div class="stat-value text-info">
+                        {% if settings.enable_user_stats %}✓{% else %}✗{% endif %}
+                    </div>
+                    <div class="text-muted">User Stats Enabled</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Actions -->
+        <div class="glass-card mb-4">
+            <h4 class="text-white mb-3"><i class="bi bi-tools"></i> Management Actions</h4>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <button onclick="clearConversations()" class="btn btn-danger w-100">
+                        <i class="bi bi-trash"></i> Clear All Conversations
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button onclick="retrainBot()" class="btn btn-warning w-100">
+                        <i class="bi bi-arrow-clockwise"></i> Reset Usage Counters
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <a href="/admin/bot/botqa/" class="btn btn-primary w-100">
+                        <i class="bi bi-database"></i> Manage Q&As
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="glass-card mb-4">
+            <h4 class="text-white mb-3"><i class="bi bi-pie-chart"></i> Category Breakdown</h4>
+            <div class="row">
+                {% for stat in category_stats %}
+                <div class="col-md-3 mb-3">
+                    <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                        <div class="text-capitalize">{{ stat.category }}</div>
+                        <div class="h4 text-primary mb-0">{{ stat.count }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Q&As -->
+        <div class="glass-card mb-4">
+            <h4 class="text-white mb-3"><i class="bi bi-star"></i> Top Q&As by Usage</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Category</th>
+                            <th>Usage Count</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for qa in top_qas %}
+                        <tr>
+                            <td>{{ qa.question|truncatewords:10 }}</td>
+                            <td><span class="badge bg-secondary">{{ qa.category }}</span></td>
+                            <td><span class="badge bg-success">{{ qa.usage_count }}</span></td>
+                            <td>{{ qa.priority }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Low Confidence Conversations -->
+        <div class="glass-card mb-4">
+            <h4 class="text-white mb-3"><i class="bi bi-exclamation-triangle"></i> Low Confidence Conversations (Training Opportunities)</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Message</th>
+                            <th>Confidence</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for conv in low_confidence %}
+                        <tr>
+                            <td>{{ conv.user.username }}</td>
+                            <td>{{ conv.user_message|truncatewords:10 }}</td>
+                            <td>
+                                <span class="badge {% if conv.confidence_score < 30 %}bg-danger{% elif conv.confidence_score < 50 %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ conv.confidence_score|floatformat:1 }}%
+                                </span>
+                            </td>
+                            <td>{{ conv.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No low confidence conversations</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="glass-card mb-4">
+            <h4 class="text-white mb-3"><i class="bi bi-clock-history"></i> Recent Activity</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Message</th>
+                            <th>Confidence</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for conv in recent_convos %}
+                        <tr>
+                            <td>{{ conv.user.username }}</td>
+                            <td>{{ conv.user_message|truncatewords:8 }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ conv.confidence_score|floatformat:0 }}%</span>
+                            </td>
+                            <td>{{ conv.created_at|timesince }} ago</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function clearConversations() {
+            if (!confirm('Are you sure you want to delete ALL conversation history? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/bot/admin/clear-conversations/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function retrainBot() {
+            if (!confirm('Reset all usage counters? This will clear Q&A usage statistics.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/bot/admin/retrain/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

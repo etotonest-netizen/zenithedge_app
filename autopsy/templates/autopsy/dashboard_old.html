@@ -1,0 +1,524 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutopsyLoop Analytics - ZenithEdge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+<style>
+    /* Professional Intelligence Console Color Palette */
+    :root {
+        --primary-blue: #1e3a5f;
+        --steel-gray: #4a5568;
+        --silver-accent: #cbd5e0;
+        --insight-teal: #2c7a7b;
+        --neutral-amber: #d69e2e;
+        --background-dark: #1a202c;
+        --text-light: #e2e8f0;
+        --success-green: #48bb78;
+        --danger-red: #f56565;
+    }
+    
+    body {
+        background-color: #f7fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, #2d4a6d 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 40px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+    }
+    
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--primary-blue);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .stat-card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--steel-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+    
+    .stat-number {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--primary-blue);
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 13px;
+        color: var(--steel-gray);
+    }
+    
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .filter-bar select {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .filter-bar .btn {
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 600;
+    }
+    
+    /* Tables */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+    }
+    
+    table th {
+        background: #f7fafc;
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--steel-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    table td {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+        color: #2d3748;
+    }
+    
+    table tr:hover {
+        background: #f7fafc;
+    }
+    
+    /* Outcome Badges */
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-succeeded {
+        background-color: rgba(72, 187, 120, 0.15);
+        color: var(--success-green);
+    }
+    
+    .badge-failed {
+        background-color: rgba(245, 101, 101, 0.15);
+        color: var(--danger-red);
+    }
+    
+    .badge-neutral {
+        background-color: rgba(74, 85, 104, 0.15);
+        color: var(--steel-gray);
+    }
+    
+    /* Progress Bars */
+    .progress {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+    
+    .progress-bar-success {
+        background: linear-gradient(90deg, var(--success-green), var(--insight-teal));
+    }
+    
+    .progress-bar-danger {
+        background: linear-gradient(90deg, var(--danger-red), #e53e3e);
+    }
+    
+    /* P&L Display */
+    .pnl-positive {
+        color: var(--success-green);
+        font-weight: 700;
+    }
+    
+    .pnl-negative {
+        color: var(--danger-red);
+        font-weight: 700;
+    }
+    
+    /* Strategy Links */
+    a.strategy-link {
+        color: var(--primary-blue);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+    
+    a.strategy-link:hover {
+        color: var(--insight-teal);
+        text-decoration: underline;
+    }
+    
+    /* Action Buttons */
+    .btn-primary {
+        background: var(--primary-blue);
+        border: none;
+        font-weight: 600;
+    }
+    
+    .btn-primary:hover {
+        background: #2d4a6d;
+    }
+    
+    .btn-secondary {
+        background: var(--steel-gray);
+        border: none;
+        font-weight: 600;
+    }
+    
+    .btn-info {
+        background: var(--insight-teal);
+        border: none;
+        font-weight: 600;
+    }
+    
+    /* Timeline Items */
+    .timeline-item {
+        padding: 12px;
+        border-left: 3px solid #e2e8f0;
+        margin-left: 12px;
+        margin-bottom: 8px;
+        transition: border-color 0.2s ease;
+    }
+    
+    .timeline-item:hover {
+        border-left-color: var(--primary-blue);
+        background: #f7fafc;
+    }
+    
+    .timeline-time {
+        font-size: 12px;
+        color: var(--steel-gray);
+    }
+    
+    /* Job Status */
+    .status-completed {
+        color: var(--success-green);
+        font-weight: 600;
+    }
+    
+    .status-processing {
+        color: var(--neutral-amber);
+        font-weight: 600;
+    }
+    
+    .status-failed {
+        color: var(--danger-red);
+        font-weight: 600;
+    }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">🔬 AutopsyLoop Analytics Dashboard</h1>
+        <p class="page-subtitle">Retrospective Performance Analysis & Learning System</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form method="GET" style="display: flex; gap: 12px; align-items: center; width: 100%;">
+            <label style="font-weight: 600; color: var(--steel-gray);">Time Range:</label>
+            <select name="days" class="form-select" style="width: 150px;">
+                <option value="1" {% if days == 1 %}selected{% endif %}>Last 24 Hours</option>
+                <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+                <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+                <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Apply Filter</button>
+            <div style="margin-left: auto;">
+                <a href="{% url 'admin:autopsy_insightaudit_changelist' %}" class="btn btn-secondary">Admin Panel</a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Overview Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3>Total Audits</h3>
+                <div class="stat-number">{{ total_audits }}</div>
+                <div class="stat-label">Last {{ days }} days</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3>Signals Available</h3>
+                <div class="stat-number">{{ total_signals }}</div>
+                <div class="stat-label">In database</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3>OHLCV Candles</h3>
+                <div class="stat-number">{{ total_candles|floatformat:0 }}</div>
+                <div class="stat-label">Market data points</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3>Recent Jobs</h3>
+                <div class="stat-number">{{ recent_jobs|length }}</div>
+                <div class="stat-label">Batch analyses</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Outcome Distribution & RCA -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="stat-card">
+                <h3>📊 Outcome Distribution</h3>
+                {% for outcome in outcomes %}
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="badge badge-{{ outcome.outcome }}">
+                            {{ outcome.outcome|upper }}
+                        </span>
+                        <span style="font-weight: 600; font-size: 18px; color: var(--primary-blue);">{{ outcome.count }}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if outcome.outcome == 'succeeded' %}progress-bar-success{% else %}progress-bar-danger{% endif %}" 
+                             style="width: {{ outcome.count }}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: var(--steel-gray); text-align: center; padding: 20px;">No audits in this period.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="stat-card">
+                <h3>🔍 Top Failure Causes (RCA)</h3>
+                <table>
+                    <tr>
+                        <th>Cause</th>
+                        <th>Count</th>
+                        <th>Avg Confidence</th>
+                    </tr>
+                    {% for cause in rca_causes %}
+                    <tr>
+                        <td>{{ cause.cause_display }}</td>
+                        <td>{{ cause.count }}</td>
+                        <td>{{ cause.avg_confidence|floatformat:1 }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">No RCA records found.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Strategy Performance -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="stat-card">
+                <h3>📈 Strategy Performance (Top 10)</h3>
+                <table>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Total Signals</th>
+                        <th>Success Rate</th>
+                        <th>Avg P&L</th>
+                        <th>Avg Drawdown</th>
+                    </tr>
+                    {% for stat in strategy_stats %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'autopsy:strategy_detail' stat.insight__strategy %}" class="strategy-link">
+                                {{ stat.insight__strategy|default:"Unknown" }}
+                            </a>
+                        </td>
+                        <td><strong>{{ stat.total }}</strong></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-weight: 600;">{{ stat.success_rate|floatformat:1 }}%</span>
+                                <div class="progress" style="width: 100px;">
+                                    <div class="progress-bar progress-bar-success" 
+                                         style="width: {{ stat.success_rate|floatformat:0 }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="{% if stat.avg_pnl >= 0 %}pnl-positive{% else %}pnl-negative{% endif %}">
+                                {% if stat.avg_pnl >= 0 %}+{% endif %}{{ stat.avg_pnl|floatformat:2 }}%
+                            </span>
+                        </td>
+                        <td>{{ stat.avg_drawdown|floatformat:1 }} pips</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--steel-gray);">No strategy data available.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Audits & Batch Jobs -->
+    <div class="row">
+        <div class="col-md-7">
+            <div class="stat-card">
+                <h3>🕐 Recent Audits</h3>
+                <table>
+                    <tr>
+                        <th>Signal</th>
+                        <th>Symbol</th>
+                        <th>Strategy</th>
+                        <th>Outcome</th>
+                        <th>P&L</th>
+                        <th>Time</th>
+                    </tr>
+                    {% for audit in recent_audits %}
+                    <tr>
+                        <td><strong>#{{ audit.insight.id }}</strong></td>
+                        <td>{{ audit.insight.symbol }}</td>
+                        <td>{{ audit.insight.strategy|default:"Unknown"|truncatewords:3 }}</td>
+                        <td>
+                            <span class="badge badge-{{ audit.outcome }}">
+                                {{ audit.outcome|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="{% if audit.pnl_pct >= 0 %}pnl-positive{% else %}pnl-negative{% endif %}">
+                                {% if audit.pnl_pct >= 0 %}+{% endif %}{{ audit.pnl_pct|floatformat:2 }}%
+                            </span>
+                        </td>
+                        <td style="font-size: 12px; color: var(--steel-gray);">{{ audit.created_at|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: var(--steel-gray);">No recent audits.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="stat-card">
+                <h3>⚙️ Recent Batch Jobs</h3>
+                <table>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Status</th>
+                        <th>Signals</th>
+                        <th>Success</th>
+                        <th>Time</th>
+                    </tr>
+                    {% for job in recent_jobs %}
+                    <tr>
+                        <td><strong>{{ job.job_id }}</strong></td>
+                        <td>
+                            <span class="{% if job.status == 'completed' %}status-completed{% elif job.status == 'failed' %}status-failed{% else %}status-processing{% endif %}">
+                                {{ job.status|upper }}
+                            </span>
+                        </td>
+                        <td>{{ job.total_count }}</td>
+                        <td>{{ job.successful_count }}</td>
+                        <td style="font-size: 12px; color: var(--steel-gray);">{{ job.created_at|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--steel-gray);">No batch jobs yet.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col-md-12">
+            <div style="margin-top: 20px; margin-bottom: 40px; text-align: center;">
+                <a href="{% url 'admin:autopsy_insightaudit_changelist' %}" class="btn btn-primary" style="margin: 0 8px;">
+                    📋 View All Audits in Admin
+                </a>
+                <a href="{% url 'admin:autopsy_auditrca_changelist' %}" class="btn btn-secondary" style="margin: 0 8px;">
+                    🔍 View All RCA Records
+                </a>
+                <a href="{% url 'admin:marketdata_ohlcvcandle_changelist' %}" class="btn btn-info" style="margin: 0 8px;">
+                    📊 View OHLCV Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

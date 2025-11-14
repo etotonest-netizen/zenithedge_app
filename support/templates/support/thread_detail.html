@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ thread.id }} - ZenithEdge Support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body{background:linear-gradient(135deg,#0a0e27,#1a1f3a);color:#e0e0e0;min-height:100vh}
+        .navbar{background:rgba(10,14,39,.95);backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,212,255,.2)}
+        .navbar-brand{font-weight:700;color:#00d4ff!important;font-size:1.5rem}
+        .nav-link{color:#b0b0b0!important}.nav-link:hover{color:#00d4ff!important}
+        .chat-container{max-width:900px;margin:2rem auto;background:rgba(26,31,58,.7);border-radius:15px;padding:2rem;border:1px solid rgba(0,212,255,.2)}
+        .message-bubble{padding:1rem;border-radius:12px;margin-bottom:1rem;max-width:75%}
+        .message-user{background:rgba(0,212,255,.1);border-left:3px solid #00d4ff;margin-left:auto}
+        .message-admin{background:rgba(40,167,69,.1);border-left:3px solid #28a745}
+        .message-meta{font-size:.85rem;color:#888;margin-top:.5rem}
+        .form-control{background:rgba(10,14,39,.8);border:1px solid rgba(0,212,255,.3);color:#e0e0e0}
+        .btn-primary{background:linear-gradient(135deg,#00d4ff,#0099cc);border:none}
+        .signal-context{background:rgba(40,167,69,.1);border-radius:8px;padding:1rem;margin-bottom:1rem;border-left:3px solid #28a745}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'signals:dashboard' %}"><i class="bi bi-graph-up-arrow"></i> ZenithEdge</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'signals:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'support:list' %}"><i class="bi bi-chat-dots"></i> Support</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 style="color:#00d4ff">Ticket #{{ thread.id }}: {{ thread.subject }}</h3>
+                <small class="text-muted">Status: <span class="badge bg-info">{{ thread.get_status_display }}</span></small>
+            </div>
+            <a href="{% url 'support:list' %}" class="btn btn-outline-info"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        {% if signal %}
+        <div class="signal-context">
+            <h6><i class="bi bi-link"></i> Related Trade Context</h6>
+            <div class="row">
+                <div class="col-md-6"><strong>Signal #{{ signal.id }}:</strong> {{ signal.symbol }} {{ signal.side|upper }}</div>
+                <div class="col-md-6"><strong>Price:</strong> {{ signal.price|default:"N/A" }} | <strong>SL:</strong> {{ signal.sl }} | <strong>TP:</strong> {{ signal.tp }}</div>
+            </div>
+            {% if journal %}
+            <div class="mt-2"><strong>Journal Note:</strong> {{ journal.notes|default:"No notes" }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="messages-container">
+            {% for msg in messages %}
+            <div class="message-bubble {% if msg.is_admin_message %}message-admin{% else %}message-user{% endif %}">
+                <div><strong>{% if msg.is_admin_message %}Support Team{% else %}You{% endif %}</strong></div>
+                <div>{{ msg.message|linebreaks }}</div>
+                {% if msg.attachment %}
+                <div class="mt-2"><a href="{{ msg.attachment.url }}" target="_blank" class="text-info"><i class="bi bi-paperclip"></i> Attachment</a></div>
+                {% endif %}
+                <div class="message-meta">{{ msg.created_at|date:"M d, Y H:i" }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if thread.status != 'closed' %}
+        <form id="replyForm" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                <textarea class="form-control" name="message" rows="4" placeholder="Type your message..." required></textarea>
+            </div>
+            <div class="mb-3">
+                <input type="file" class="form-control" name="attachment">
+                <small class="text-muted">Optional: Attach a screenshot or file</small>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Send Message</button>
+        </form>
+        {% else %}
+        <div class="alert alert-secondary mt-4">This ticket is closed.</div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('{% url "support:send_message" thread.id %}', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error sending message');
+                }
+            } catch (error) {
+                alert('Error sending message');
+            }
+        });
+    </script>
+</body>
+</html>

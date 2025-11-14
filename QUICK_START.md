@@ -1,0 +1,432 @@
+# ZenithEdge Trading System - Quick Start Guide
+
+## 🎉 System is Running!
+
+Your ZenithEdge trading system is now live and ready to accept signals from TradingView!
+
+## ⚙️ Initial Setup
+
+### 1. Environment Configuration
+
+Create a `.env` file in the project root (copy from `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+**Required Environment Variables:**
+```bash
+# Security
+SECRET_KEY=your-secret-key-here-change-this-in-production
+DEBUG=True  # Set to False in production
+
+# Database (optional - defaults to SQLite)
+# DATABASE_URL=postgresql://user:pass@localhost/dbname
+
+# Security Settings
+ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com
+
+# Rate Limiting
+WEBHOOK_RATE_LIMIT=10  # requests per second
+
+# Optional: Redis for caching (recommended for production)
+# REDIS_URL=redis://localhost:6379/0
+```
+
+**Generate a secure SECRET_KEY:**
+```bash
+python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+```
+
+### 2. Run Database Migrations
+
+```bash
+python3 manage.py migrate
+```
+
+### 3. Create Admin User
+
+```bash
+python3 manage.py createsuperuser
+```
+
+### 4. Start the Development Server
+
+```bash
+python3 manage.py runserver 8000
+```
+
+Your ZenithEdge trading system is now live and ready to accept signals from TradingView!
+
+### 🌐 Access URLs
+
+**Dashboard (View Signals):**
+- http://127.0.0.1:8000/api/signals/dashboard/
+- http://127.0.0.1:8000/api/signals/
+
+**Django Admin:**
+- http://127.0.0.1:8000/admin/
+- Username: `admin`
+- Password: `admin123`
+
+**Webhook Endpoint (for TradingView):**
+- http://127.0.0.1:8000/api/signals/webhook/
+- Method: POST
+- Content-Type: application/json
+
+---
+
+## 🔒 Security Features
+
+### Rate Limiting
+All webhook endpoints are protected with rate limiting (configurable via `WEBHOOK_RATE_LIMIT` env var):
+- Default: 10 requests per second per webhook UUID/IP
+- Prevents abuse and DDoS attacks
+- Returns `429 Too Many Requests` when limit exceeded
+
+### HMAC Signature Validation (Optional)
+Enable webhook signature validation for enhanced security:
+
+1. **Generate HMAC secret in Django Admin:**
+   - Go to Webhook Config for your user
+   - Click "Generate HMAC Secret"
+   - Copy the generated secret
+
+2. **Configure TradingView to sign requests:**
+   - Add custom header: `X-ZenithEdge-Signature`
+   - Value format: `sha256=<hex_digest>`
+   - Compute: `HMAC-SHA256(webhook_body, your_secret)`
+
+3. **Verify in logs:**
+   - Check `logs/webhook.log` for signature validation status
+   - Invalid signatures are rejected with `403 Forbidden`
+
+### Security Headers
+All responses include security headers:
+- `Content-Security-Policy`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Strict-Transport-Security` (HTTPS only)
+
+### HTTPS Enforcement
+In production (`DEBUG=False`):
+- All HTTP requests redirect to HTTPS
+- Secure cookies only
+- HSTS enabled
+
+---
+
+## 🧪 Testing the System
+
+### 1. Test the Webhook with cURL
+
+Send a test signal from your terminal:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/signals/webhook/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "BTCUSDT",
+    "timeframe": "1h",
+    "side": "buy",
+    "sl": 50000.50,
+    "tp": 52000.00,
+    "confidence": 85.5,
+    "strategy": "ZenithEdge",
+    "regime": "Trend",
+    "price": 51000.00,
+    "timestamp": "2025-11-09T10:30:00Z"
+  }'
+```
+
+Expected response:
+```json
+{
+  "status": "received",
+  "signal_id": 1,
+  "allowed": true,
+  "reason": "No active prop rules configured"
+}
+```
+
+### 2. Set Up Prop Rules (Optional)
+
+Go to Django Admin → Prop Trading Rules → Add new:
+
+**Example FTMO Challenge Settings:**
+- Name: `FTMO Challenge`
+- Max Daily Loss %: `5.0`
+- Max Trades Per Day: `10`
+- Max Open Positions: `3`
+- Blackout Minutes: `10`
+- Min Confidence Score: `70.0`
+- Allow Weekend Trading: `False`
+- Is Active: `✓`
+
+### 3. Test Rejected Signal
+
+Send a low-confidence signal (should be rejected if prop rules active):
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/signals/webhook/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "BTCUSDT",
+    "timeframe": "1h",
+    "side": "buy",
+    "sl": 50000.50,
+    "tp": 52000.00,
+    "confidence": 45.0,
+    "strategy": "ZenithEdge",
+    "regime": "Trend"
+  }'
+```
+
+---
+
+## 📊 View Your Dashboard
+
+1. Open browser: http://127.0.0.1:8000/api/signals/dashboard/
+2. You'll see:
+   - Statistics cards (Total, Allowed, Rejected signals)
+   - Filter options
+   - Table with all signals
+   - Beautiful dark theme optimized for trading
+
+---
+
+## 🔧 TradingView Integration
+
+### Configure Your Pine Script Alert
+
+1. Open your chart with ZenithEdge strategy
+2. Click the **Alert** icon (⏰)
+3. Set conditions (strategy fills will trigger automatically)
+4. In **Notifications** tab:
+   - Check ✓ **Webhook URL**
+   - Enter: `http://YOUR_SERVER_IP:8000/api/signals/webhook/`
+5. The alert message is auto-generated by the strategy
+
+### For Local Testing (ngrok)
+
+If testing locally and need TradingView to reach your machine:
+
+```bash
+# Install ngrok: https://ngrok.com/
+ngrok http 8000
+```
+
+Then use the ngrok URL in TradingView: `https://xxxx-xxx-xxx.ngrok.io/api/signals/webhook/`
+
+---
+
+## 📁 Project Structure
+
+```
+/tmp/django_trading_webhook/
+├── manage.py                          # Django management script
+├── db.sqlite3                         # Database
+├── zenithedge/                        # Main project
+│   ├── settings.py                    # Configuration
+│   ├── urls.py                        # URL routing
+│   └── wsgi.py                        # WSGI config
+└── signals/                           # Trading signals app
+    ├── models.py                      # Signal & PropRules models
+    ├── views.py                       # Webhook & Dashboard views
+    ├── urls.py                        # App URLs
+    ├── admin.py                       # Admin configuration
+    ├── tests.py                       # Test suite
+    ├── templates/
+    │   └── signals/
+    │       └── dashboard.html         # Dashboard UI
+    └── migrations/
+        └── 0001_initial.py            # Database schema
+```
+
+---
+
+## 🎯 What Each Component Does
+
+### Models
+- **Signal**: Stores each trading signal from TradingView
+- **PropRules**: Defines risk management rules
+
+### Views
+- **signal_webhook**: Receives & validates signals
+- **DashboardView**: Displays signals with filters
+
+### Functions
+- **check_signal_against_prop**: Validates signals against prop rules
+
+---
+
+## 🔍 Common Tasks
+
+### View All Signals in Admin
+1. Go to: http://127.0.0.1:8000/admin/
+2. Login with `admin` / `admin123`
+3. Click **Signals** → **Trading Signals**
+
+### Filter Signals in Dashboard
+Use the filter section to narrow down by:
+- Status (Allowed/Rejected)
+- Side (Buy/Sell)
+- Regime (Trend/Breakout/MeanReversion/Squeeze)
+- Symbol
+
+### Check Logs
+```bash
+tail -f /tmp/django_trading_webhook/zenithedge.log
+```
+
+### Stop the Server
+Press `Ctrl+C` in the terminal where server is running
+
+### Restart the Server
+```bash
+cd /tmp/django_trading_webhook
+python3 manage.py runserver 8000
+```
+
+---
+
+## 🚀 Next Steps
+
+1. ✅ **Test the webhook** with the cURL command above
+2. ✅ **Create prop rules** in Django admin
+3. ✅ **View dashboard** to see signals
+4. ✅ **Configure TradingView** to send real signals
+5. ✅ **Integrate with trading bot** to execute allowed signals
+
+---
+
+## 📈 System Features
+
+### Core Trading Features
+✅ **4 Trading Modes**: Trend, Breakout, Mean Reversion, Squeeze  
+✅ **Prop Rules Validation**: FTMO, MFF, etc. compliance  
+✅ **Risk Control System**: Daily loss limits, max drawdown, session tracking  
+✅ **Signal Validation Pipeline**: SL/TP logic, confidence checks, R:R calculation  
+✅ **Trade Journal**: Comprehensive trade tracking and notes  
+✅ **Trade Replay**: Visualize historical trades with TradingView integration  
+
+### ZenBot AI Features
+✅ **AI Scoring Engine**: Advanced signal quality assessment (0-100 scale)  
+✅ **Strategy-Specific Weights**: Optimized scoring per trading strategy  
+✅ **Training Command**: Auto-optimize weights based on historical performance  
+✅ **Score Explanations**: Human-readable breakdown of AI decisions  
+✅ **Bot Chat Interface**: Ask ZenBot about signals, prop status, strategies  
+✅ **Slash Commands**: `/score <id>`, `/prop status`, `/strategy stats`, `/help`  
+
+### Dashboard & Analytics
+✅ **Enhanced Filters**: Strategy, regime, AI score range, symbols  
+✅ **Signal Detail Modal**: Full breakdown with ZenBot analysis  
+✅ **Prop Status Bar**: Real-time challenge monitoring (daily loss, drawdown, session)  
+✅ **Performance Cache**: Pre-aggregated daily statistics for fast dashboards  
+✅ **Backtesting Module**: Test strategies with slippage simulation  
+✅ **Strategy Performance Docs**: Auto-generated strategy analysis reports  
+
+### Security & Infrastructure
+✅ **Environment-Based Config**: Secure .env file management  
+✅ **Rate Limiting**: 10 req/sec webhook protection  
+✅ **HMAC Signatures**: Optional webhook signature validation  
+✅ **Security Headers**: CSP, HSTS, X-Frame-Options  
+✅ **HTTPS Enforcement**: Production-ready security  
+✅ **Webhook Logging**: Dedicated logs/webhook.log for debugging  
+
+### Support & Documentation
+✅ **Support System**: Ticketing with signal attachments  
+✅ **Comprehensive Testing**: Unit tests for all major features  
+✅ **Admin Interface**: Full CRUD operations  
+✅ **Strategy Documentation**: Auto-generated performance reports  
+
+---
+
+## 🆘 Troubleshooting
+
+**Dashboard shows 404?**
+- Verify server is running: Check terminal output
+- Try: http://127.0.0.1:8000/api/signals/
+
+**Webhook not receiving signals?**
+- Test with cURL first
+- Check firewall settings
+- Verify TradingView can reach your server
+
+**Signals not showing in dashboard?**
+- Send a test signal with cURL
+- Check database: Django admin → Signals
+- Clear browser cache
+
+---
+
+## 🤖 ZenBot Commands
+
+Access ZenBot through `/bot/ask/` endpoint:
+
+### Available Commands
+- `/score <signal_id>` - Get detailed AI score breakdown for a signal
+- `/prop status` - Check your prop challenge status and limits
+- `/strategy stats` - View performance statistics by strategy
+- `/help` - Show all available commands
+
+### Usage Example
+```bash
+curl -X POST http://127.0.0.1:8000/bot/ask/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{"prompt": "/prop status"}'
+```
+
+---
+
+## � Management Commands
+
+### Daily Performance Aggregation
+Pre-aggregate statistics for faster dashboard loading:
+```bash
+python3 manage.py aggregate_daily_performance --date 2025-11-09
+```
+
+### Train ZenBot Scoring Weights
+Optimize AI scoring weights based on historical win/loss data:
+```bash
+python3 manage.py zenbot_train_score_model --window-days 30 --learning-rate 0.1
+```
+
+### Generate Strategy Documentation
+Create comprehensive markdown docs for each strategy:
+```bash
+python3 docs/generate_strategy_docs.py
+```
+
+Output: `docs/strategies/<strategy_name>.md`
+
+---
+
+## �📚 Documentation Files
+
+- `README.md` - Main webhook documentation
+- `QUICK_START.md` - This file!
+- `PROP_RULES_GUIDE.md` - Prop rules setup & usage
+- `RISK_CONTROL_GUIDE.md` - Risk management system
+- `SESSION_RULES_GUIDE.md` - Trading session configuration
+- `DASHBOARD_GUIDE.md` - Dashboard customization
+- `TRADE_JOURNAL_GUIDE.md` - Journal system usage
+- `TRADE_REPLAY_QUICK_START.md` - Trade visualization
+- `PERFORMANCE_ANALYTICS_GUIDE.md` - Analytics features
+- `AUTH_GUIDE.md` - Authentication & API keys
+- `TESTING_GUIDE.md` - Testing framework
+- `docs/AI_SCORE_IMPLEMENTATION_SUMMARY.md` - ZenBot AI details
+- `docs/SIGNAL_VALIDATION_PIPELINE.md` - Validation logic
+- `docs/DYNAMIC_BACKTESTING.md` - Backtesting features
+- `docs/strategies/` - Auto-generated strategy performance reports
+
+---
+
+## 🎉 You're All Set!
+
+Your ZenithEdge trading system is operational. Start sending signals from TradingView and watch them appear in real-time on your dashboard!
+
+**Happy Trading! 📊💰**

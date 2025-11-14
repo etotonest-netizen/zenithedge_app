@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - ZenithEdge</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #00d4ff !important;
+            font-size: 1.5rem;
+        }
+        .nav-link {
+            color: #b0b0b0 !important;
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #00d4ff !important;
+        }
+        .container-fluid {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .support-container {
+            background: rgba(26, 31, 58, 0.7);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        .thread-card {
+            background: rgba(10, 14, 39, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .thread-card:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .thread-card.unread {
+            border-left: 4px solid #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-open { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .status-admin_replied { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+        .status-user_replied { background: rgba(40, 167, 69, 0.2); color: #28a745; }
+        .status-closed { background: rgba(108, 117, 125, 0.2); color: #6c757d; }
+        .page-title {
+            color: #00d4ff;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .modal-content {
+            background: rgba(26, 31, 58, 0.95);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        .form-control, .form-select {
+            background: rgba(10, 14, 39, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #e0e0e0;
+        }
+        .form-control:focus {
+            background: rgba(10, 14, 39, 0.9);
+            border-color: #00d4ff;
+            color: #e0e0e0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'signals:dashboard' %}">
+                <i class="bi bi-graph-up-arrow"></i> ZenithEdge
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signals:dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'support:list' %}">
+                            <i class="bi bi-chat-dots"></i> Support
+                            {% if unread_count > 0 %}
+                            <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="page-title"><i class="bi bi-chat-dots"></i> Support Tickets</h1>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                <i class="bi bi-plus-lg"></i> Open New Ticket
+            </button>
+        </div>
+
+        <div class="support-container">
+            {% if threads %}
+                {% for thread in threads %}
+                <div class="thread-card {% if thread.has_unread_admin_message %}unread{% endif %}" 
+                     onclick="window.location.href='{% url 'support:thread_detail' thread.id %}'">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1" style="color: #00d4ff;">
+                                #{{ thread.id }} - {{ thread.subject }}
+                                {% if thread.has_unread_admin_message %}
+                                <span class="badge bg-danger ms-2">New Reply</span>
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> Last updated: {{ thread.last_message_at|date:"M d, Y H:i" }}
+                                {% if thread.signal_id %}
+                                | <i class="bi bi-link-45deg"></i> Related to Signal #{{ thread.signal_id }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <span class="status-badge status-{{ thread.status }}">
+                            {{ thread.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">
+                            <i class="bi bi-chat-left-text"></i> {{ thread.message_count }} message{{ thread.message_count|pluralize }}
+                        </span>
+                        <span class="text-muted">
+                            Created {{ thread.created_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #00d4ff;"></i>
+                    <h3 class="mt-3">No Support Tickets Yet</h3>
+                    <p class="text-muted">Need help? Open a new ticket and our team will assist you.</p>
+                    <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                        <i class="bi bi-plus-lg"></i> Open Your First Ticket
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- New Ticket Modal -->
+    <div class="modal fade" id="newTicketModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" style="color: #00d4ff;">Open New Support Ticket</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="newTicketForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject *</label>
+                            <input type="text" class="form-control" id="subject" name="subject" required
+                                   placeholder="Brief description of your issue">
+                        </div>
+                        <div class="mb-3">
+                            <label for="signal_id" class="form-label">Related Signal ID (Optional)</label>
+                            <input type="number" class="form-control" id="signal_id" name="signal_id"
+                                   placeholder="Enter signal ID if this relates to a specific trade">
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message (Optional)</label>
+                            <textarea class="form-control" id="message" name="message" rows="5"
+                                      placeholder="Describe your issue in detail..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Ticket</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle new ticket form submission
+        document.getElementById('newTicketForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('{% url "support:create_thread" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error || 'Error creating ticket');
+                }
+            } catch (error) {
+                alert('Error creating ticket');
+            }
+        });
+
+        // Poll for new messages every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('{% url "support:unread_count" %}');
+                const data = await response.json();
+                
+                const badge = document.querySelector('.nav-link .badge');
+                if (data.unread_count > 0) {
+                    if (badge) {
+                        badge.textContent = data.unread_count;
+                    }
+                    // Refresh page if new messages arrived
+                    if (data.unread_count > {{ unread_count }}) {
+                        location.reload();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking for new messages');
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

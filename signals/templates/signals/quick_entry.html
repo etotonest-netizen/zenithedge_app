@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Signal Entry - ZenithEdge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .side-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .side-btn.active.buy {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        .side-btn.active.sell {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+        }
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .quick-fill {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .quick-fill button {
+            padding: 6px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .quick-fill button:hover {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Quick Signal Entry</h1>
+        <p class="subtitle">Manual TradingView signal submission</p>
+        
+        <div id="successMsg" class="success"></div>
+        <div id="errorMsg" class="error"></div>
+        
+        <form id="signalForm">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            
+            <div class="form-group">
+                <label>Symbol</label>
+                <input type="text" name="symbol" id="symbol" required placeholder="e.g., EURUSD" value="EURUSD">
+                <div class="quick-fill">
+                    <button type="button" onclick="setSymbol('EURUSD')">EURUSD</button>
+                    <button type="button" onclick="setSymbol('GBPUSD')">GBPUSD</button>
+                    <button type="button" onclick="setSymbol('USDJPY')">USDJPY</button>
+                    <button type="button" onclick="setSymbol('XAUUSD')">XAUUSD</button>
+                    <button type="button" onclick="setSymbol('BTCUSD')">BTCUSD</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Direction</label>
+                <div class="btn-group">
+                    <button type="button" class="side-btn buy" onclick="setSide('buy')">🟢 BUY</button>
+                    <button type="button" class="side-btn sell" onclick="setSide('sell')">🔴 SELL</button>
+                </div>
+                <input type="hidden" name="side" id="side" value="buy">
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Timeframe</label>
+                    <select name="timeframe" required>
+                        <option value="1">1min</option>
+                        <option value="5">5min</option>
+                        <option value="15">15min</option>
+                        <option value="30">30min</option>
+                        <option value="1H" selected>1H</option>
+                        <option value="4H">4H</option>
+                        <option value="D">Daily</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Confidence %</label>
+                    <input type="number" name="confidence" min="0" max="100" step="0.1" value="80" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Stop Loss</label>
+                    <input type="text" name="sl" placeholder="e.g., 1.0800" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Take Profit</label>
+                    <input type="text" name="tp" placeholder="e.g., 1.0900" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Strategy</label>
+                <select name="strategy" required>
+                    <option value="manual_entry" selected>Manual Entry</option>
+                    <option value="trend_following">Trend Following</option>
+                    <option value="breakout">Breakout</option>
+                    <option value="reversal">Reversal</option>
+                    <option value="scalping">Scalping</option>
+                    <option value="swing">Swing Trade</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Market Regime</label>
+                <select name="regime" required>
+                    <option value="trending" selected>Trending</option>
+                    <option value="ranging">Ranging</option>
+                    <option value="volatile">Volatile</option>
+                    <option value="quiet">Quiet</option>
+                </select>
+            </div>
+
+            <button type="submit">📊 Submit Signal</button>
+        </form>
+    </div>
+
+    <script>
+        let currentSide = 'buy';
+
+        function setSymbol(symbol) {
+            document.getElementById('symbol').value = symbol;
+        }
+
+        function setSide(side) {
+            currentSide = side;
+            document.getElementById('side').value = side;
+            
+            // Update button styles
+            document.querySelectorAll('.side-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Initialize buy button as active
+        document.querySelector('.side-btn.buy').classList.add('active');
+
+        document.getElementById('signalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert confidence to float
+            data.confidence = parseFloat(data.confidence);
+            
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/signals/webhook/?token={{ token }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    successMsg.textContent = `✓ Signal submitted successfully! ID: ${result.signal_id}`;
+                    successMsg.style.display = 'block';
+                    
+                    // Clear form (except symbol and timeframe)
+                    document.querySelector('[name="sl"]').value = '';
+                    document.querySelector('[name="tp"]').value = '';
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo(0, 0);
+                    
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        successMsg.style.display = 'none';
+                    }, 5000);
+                } else {
+                    errorMsg.textContent = `✗ Error: ${result.error || 'Failed to submit signal'}`;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = `✗ Network error: ${error.message}`;
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        // Auto-fill current time for testing
+        console.log('Quick Entry Form Loaded - Ready to submit signals!');
+    </script>
+</body>
+</html>

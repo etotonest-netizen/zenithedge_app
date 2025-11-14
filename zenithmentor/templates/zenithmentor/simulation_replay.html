@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation - {{ simulation.scenario.name }} - ZenithMentor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        .sim-header { background: linear-gradient(135deg, #0f3460 0%, #16537e 100%); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; }
+        .chart-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 2rem; min-height: 400px; }
+        .trade-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 1.5rem; }
+        .stat-box { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 1rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'zenithmentor:dashboard' %}">
+                <i class="bi bi-mortarboard-fill"></i> ZenithMentor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:dashboard' %}"><i class="bi bi-house-fill"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:scenario_list' %}"><i class="bi bi-collection-play-fill"></i> Scenarios</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="sim-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1><i class="bi bi-controller"></i> {{ simulation.scenario.name }}</h1>
+                    <div class="mt-2">
+                        <span class="badge bg-primary">{{ simulation.scenario.get_regime_display }}</span>
+                        <span class="badge bg-info">{{ simulation.scenario.get_strategy_focus_display }}</span>
+                        <span class="badge bg-warning text-dark">Difficulty {{ simulation.scenario.difficulty }}/10</span>
+                        <span class="badge bg-secondary">{{ simulation.scenario.symbol }} {{ simulation.scenario.timeframe }}</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge {% if simulation.status == 'in_progress' %}bg-warning text-dark{% elif simulation.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                        {{ simulation.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <h4 class="{% if simulation.final_pnl > 0 %}text-success{% elif simulation.final_pnl < 0 %}text-danger{% else %}text-muted{% endif %}">
+                        ${{ simulation.final_pnl|floatformat:2 }}
+                    </h4>
+                    <small class="text-muted">P&L</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <h4 class="text-info">${{ simulation.final_balance|floatformat:2 }}</h4>
+                    <small class="text-muted">Balance</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <h4 class="text-warning">{{ simulation.trades_count }}</h4>
+                    <small class="text-muted">Trades</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <h4 class="{% if simulation.win_rate >= 50 %}text-success{% else %}text-danger{% endif %}">
+                        {{ simulation.win_rate|floatformat:1 }}%
+                    </h4>
+                    <small class="text-muted">Win Rate</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Area -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="bi bi-graph-up-arrow"></i> Price Chart</h5>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i> 
+                        <strong>Chart Replay Coming Soon!</strong> 
+                        This will display an interactive candlestick chart with replay controls.
+                        For now, you can view scenario details and manage trades below.
+                    </div>
+                    <div class="mt-3">
+                        <p><strong>Scenario Info:</strong></p>
+                        <ul>
+                            <li>Total Candles: {{ simulation.scenario.candle_data|length }}</li>
+                            <li>Date Range: {{ simulation.scenario.start_date|date:"M d, Y" }} - {{ simulation.scenario.end_date|date:"M d, Y" }}</li>
+                            {% if simulation.scenario.has_synthetic_news %}
+                            <li>News Events: Yes ({{ simulation.scenario.synthetic_news_events|length }} events)</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Management -->
+        {% if simulation.status == 'in_progress' %}
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="trade-form">
+                    <h5><i class="bi bi-plus-circle-fill text-success"></i> Submit Trade</h5>
+                    <form id="tradeForm" method="post" action="{% url 'zenithmentor:submit_trade' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="simulation_id" value="{{ simulation.id }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Direction</label>
+                            <select name="direction" class="form-select" required>
+                                <option value="">Select direction...</option>
+                                <option value="long">Long (Buy)</option>
+                                <option value="short">Short (Sell)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Entry Price</label>
+                                <input type="number" name="entry_price" class="form-control" step="0.00001" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Position Size (lots)</label>
+                                <input type="number" name="position_size" class="form-control" step="0.01" value="0.1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Stop Loss</label>
+                                <input type="number" name="stop_loss" class="form-control" step="0.00001" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Take Profit</label>
+                                <input type="number" name="take_profit" class="form-control" step="0.00001" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Trade Rationale (Required)</label>
+                            <textarea name="rationale" class="form-control" rows="4" placeholder="Explain your entry reason, risk management, and market context..." required></textarea>
+                            <small class="text-muted">Minimum 50 words for NLP analysis</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle-fill"></i> Submit Trade
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="trade-form">
+                    <h5><i class="bi bi-journal-text text-info"></i> Add Journal Entry</h5>
+                    <form method="post" action="{% url 'zenithmentor:add_journal' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="simulation_id" value="{{ simulation.id }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Journal Entry</label>
+                            <textarea name="entry_text" class="form-control" rows="8" placeholder="Reflect on your trading decisions, emotions, and lessons learned..." required></textarea>
+                            <small class="text-muted">Minimum 100 words for quality NLP analysis</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-info w-100">
+                            <i class="bi bi-journal-plus"></i> Add Entry
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complete Simulation -->
+        <div class="mt-4">
+            <form method="post" action="{% url 'zenithmentor:complete_simulation' %}">
+                {% csrf_token %}
+                <input type="hidden" name="simulation_id" value="{{ simulation.id }}">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Complete Simulation & Get Graded
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <!-- Show Results -->
+        <div class="alert alert-success">
+            <h5><i class="bi bi-check-circle-fill"></i> Simulation Completed!</h5>
+            <p>Overall Score: {{ simulation.overall_score|floatformat:1 }}/100</p>
+            <a href="{% url 'zenithmentor:simulation_results' simulation.id %}" class="btn btn-success">
+                View Detailed Results
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Existing Trades -->
+        {% if trades %}
+        <div class="mt-4">
+            <h5><i class="bi bi-list-ul"></i> Trade History ({{ trades|length }})</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>Direction</th>
+                            <th>Entry</th>
+                            <th>Stop Loss</th>
+                            <th>Take Profit</th>
+                            <th>Size</th>
+                            <th>P&L</th>
+                            <th>ZenBot Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr>
+                            <td>
+                                {% if trade.direction == 'long' %}
+                                <span class="badge bg-success">LONG</span>
+                                {% else %}
+                                <span class="badge bg-danger">SHORT</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ trade.entry_price }}</td>
+                            <td>{{ trade.stop_loss }}</td>
+                            <td>{{ trade.take_profit }}</td>
+                            <td>{{ trade.position_size }}</td>
+                            <td class="{% if trade.pnl > 0 %}text-success{% elif trade.pnl < 0 %}text-danger{% endif %}">
+                                ${{ trade.pnl|floatformat:2 }}
+                            </td>
+                            <td>
+                                {% if trade.zenbot_score %}
+                                <span class="badge {% if trade.zenbot_score >= 70 %}bg-success{% elif trade.zenbot_score >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ trade.zenbot_score }}/100
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if trade.exit_timestamp %}
+                                <span class="badge bg-info">Closed</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Open</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+{% extends "signals/base.html" %}
+{% load static %}
+
+{% block title %}Saved Backtests - ZenithEdge{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-bookmark-star"></i> Saved Backtests</h1>
+        <a href="{% url 'backtest_form' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> New Backtest
+        </a>
+    </div>
+
+    {% if backtests %}
+        <div class="row">
+            {% for bt in backtests %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card bg-dark border-{{ bt.get_performance_badge }} h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">
+                                {{ bt.name|default:bt.strategy }}
+                            </h5>
+                            <p class="card-text text-white-50">
+                                <small>
+                                    <i class="bi bi-graph-up"></i> {{ bt.symbol|default:"All Symbols" }}<br>
+                                    <i class="bi bi-calendar-range"></i> {{ bt.start_date }} to {{ bt.end_date }}<br>
+                                    <i class="bi bi-clock"></i> {{ bt.created_at|date:"M d, Y H:i" }}
+                                </small>
+                            </p>
+                            
+                            <hr class="border-secondary">
+                            
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-white-50 d-block">Trades</small>
+                                    <strong class="text-info">{{ bt.total_trades }}</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-white-50 d-block">Win Rate</small>
+                                    <strong class="text-{{ bt.get_performance_badge }}">
+                                        {{ bt.win_rate|floatformat:1 }}%
+                                    </strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-white-50 d-block">P/F</small>
+                                    <strong class="text-warning">{{ bt.profit_factor|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                            
+                            <hr class="border-secondary">
+                            
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'backtest_results' bt.id %}" class="btn btn-sm btn-primary flex-grow-1">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{% url 'backtest_export' bt.id %}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button onclick="deleteBacktest({{ bt.id }})" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-white-50"></i>
+            <h3 class="mt-3 text-white-50">No saved backtests yet</h3>
+            <p class="text-white-50">Run your first backtest to see results here</p>
+            <a href="{% url 'backtest_form' %}" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-circle"></i> Create Backtest
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function deleteBacktest(id) {
+    if (confirm('Are you sure you want to delete this backtest?')) {
+        fetch(`/backtest/${id}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            alert('Error deleting backtest');
+            console.error(error);
+        });
+    }
+}
+</script>
+{% endblock %}

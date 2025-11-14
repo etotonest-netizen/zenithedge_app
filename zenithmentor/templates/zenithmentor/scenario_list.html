@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Scenarios - ZenithMentor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        .scenarios-header { background: linear-gradient(135deg, #0f3460 0%, #16537e 100%); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; }
+        .filter-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 1.5rem; margin-bottom: 2rem; }
+        .scenario-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s; }
+        .scenario-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .difficulty-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .difficulty-fill { height: 100%; transition: width 0.3s; }
+        .difficulty-1-3 { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
+        .difficulty-4-6 { background: linear-gradient(90deg, #FFC107, #FF9800); }
+        .difficulty-7-10 { background: linear-gradient(90deg, #FF5722, #F44336); }
+        .stat-badge { background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 8px; margin-right: 1rem; }
+        .regime-badge { font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'zenithmentor:dashboard' %}">
+                <i class="bi bi-mortarboard-fill"></i> ZenithMentor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:dashboard' %}"><i class="bi bi-house-fill"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:curriculum' %}"><i class="bi bi-book-fill"></i> Curriculum</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'zenithmentor:scenario_list' %}"><i class="bi bi-collection-play-fill"></i> Scenarios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'zenithmentor:progress_report' %}"><i class="bi bi-graph-up"></i> Progress</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="scenarios-header">
+            <h1><i class="bi bi-collection-play-fill"></i> Practice Scenarios</h1>
+            <p class="mb-0">{{ total_scenarios }} scenarios available for training</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-card">
+            <form method="get" action="">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Difficulty</label>
+                        <select name="difficulty" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Levels</option>
+                            <option value="1-3" {% if difficulty_filter == '1-3' %}selected{% endif %}>Beginner (1-3)</option>
+                            <option value="4-6" {% if difficulty_filter == '4-6' %}selected{% endif %}>Intermediate (4-6)</option>
+                            <option value="7-10" {% if difficulty_filter == '7-10' %}selected{% endif %}>Advanced (7-10)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Market Regime</label>
+                        <select name="regime" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Regimes</option>
+                            <option value="trending_bull" {% if regime_filter == 'trending_bull' %}selected{% endif %}>Trending Bull</option>
+                            <option value="trending_bear" {% if regime_filter == 'trending_bear' %}selected{% endif %}>Trending Bear</option>
+                            <option value="ranging" {% if regime_filter == 'ranging' %}selected{% endif %}>Ranging</option>
+                            <option value="high_volatility" {% if regime_filter == 'high_volatility' %}selected{% endif %}>High Volatility</option>
+                            <option value="low_volatility" {% if regime_filter == 'low_volatility' %}selected{% endif %}>Low Volatility</option>
+                            <option value="breakout" {% if regime_filter == 'breakout' %}selected{% endif %}>Breakout</option>
+                            <option value="reversal" {% if regime_filter == 'reversal' %}selected{% endif %}>Reversal</option>
+                            <option value="news_driven" {% if regime_filter == 'news_driven' %}selected{% endif %}>News Driven</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Strategy Focus</label>
+                        <select name="strategy" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Strategies</option>
+                            <option value="trend" {% if strategy_filter == 'trend' %}selected{% endif %}>Trend Following</option>
+                            <option value="breakout" {% if strategy_filter == 'breakout' %}selected{% endif %}>Breakouts</option>
+                            <option value="mean_reversion" {% if strategy_filter == 'mean_reversion' %}selected{% endif %}>Mean Reversion</option>
+                            <option value="smc" {% if strategy_filter == 'smc' %}selected{% endif %}>SMC</option>
+                            <option value="scalping" {% if strategy_filter == 'scalping' %}selected{% endif %}>Scalping</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Session</label>
+                        <select name="session" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Sessions</option>
+                            <option value="asian" {% if session_filter == 'asian' %}selected{% endif %}>Asian</option>
+                            <option value="london" {% if session_filter == 'london' %}selected{% endif %}>London</option>
+                            <option value="newyork" {% if session_filter == 'newyork' %}selected{% endif %}>New York</option>
+                            <option value="overlap" {% if session_filter == 'overlap' %}selected{% endif %}>Overlap</option>
+                        </select>
+                    </div>
+                </div>
+                {% if difficulty_filter or regime_filter or strategy_filter or session_filter %}
+                <div class="mt-3">
+                    <a href="{% url 'zenithmentor:scenario_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Scenario List -->
+        {% if scenarios %}
+        <div class="row">
+            {% for scenario in scenarios %}
+            <div class="col-md-6 mb-3">
+                <div class="scenario-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">{{ scenario.name }}</h5>
+                            <div>
+                                <span class="badge regime-badge bg-primary">{{ scenario.get_regime_display }}</span>
+                                <span class="badge regime-badge bg-info">{{ scenario.get_strategy_focus_display }}</span>
+                                {% if scenario.session %}
+                                <span class="badge regime-badge bg-warning text-dark">{{ scenario.get_session_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-warning fw-bold">Difficulty {{ scenario.difficulty }}/10</div>
+                            <div class="difficulty-bar mt-1" style="width: 100px;">
+                                <div class="difficulty-fill {% if scenario.difficulty <= 3 %}difficulty-1-3{% elif scenario.difficulty <= 6 %}difficulty-4-6{% else %}difficulty-7-10{% endif %}" style="width: {{ scenario.difficulty }}0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="stat-badge">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <div class="small text-muted">Symbol</div>
+                            <div class="fw-bold">{{ scenario.symbol }}</div>
+                        </div>
+                        <div class="stat-badge">
+                            <i class="bi bi-clock"></i>
+                            <div class="small text-muted">Timeframe</div>
+                            <div class="fw-bold">{{ scenario.timeframe }}</div>
+                        </div>
+                        <div class="stat-badge">
+                            <i class="bi bi-bar-chart-line"></i>
+                            <div class="small text-muted">Candles</div>
+                            <div class="fw-bold">{{ scenario.candle_data|length }}</div>
+                        </div>
+                    </div>
+
+                    {% if scenario.has_synthetic_news %}
+                    <div class="alert alert-warning py-2 mb-3">
+                        <small><i class="bi bi-newspaper"></i> Includes synthetic news events</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                <i class="bi bi-people-fill"></i> {{ scenario.times_used }} attempts | 
+                                <i class="bi bi-trophy-fill"></i> {{ scenario.pass_rate|floatformat:0 }}% pass rate
+                            </small>
+                        </div>
+                        <form method="post" action="{% url 'zenithmentor:launch_simulation' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="scenario_id" value="{{ scenario.id }}">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-play-fill"></i> Launch
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if scenarios.has_other_pages %}
+        <nav aria-label="Scenario pagination">
+            <ul class="pagination justify-content-center">
+                {% if scenarios.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ scenarios.previous_page_number }}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if regime_filter %}&regime={{ regime_filter }}{% endif %}{% if strategy_filter %}&strategy={{ strategy_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in scenarios.paginator.page_range %}
+                    {% if scenarios.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > scenarios.number|add:'-3' and num < scenarios.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if regime_filter %}&regime={{ regime_filter }}{% endif %}{% if strategy_filter %}&strategy={{ strategy_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if scenarios.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ scenarios.next_page_number }}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if regime_filter %}&regime={{ regime_filter }}{% endif %}{% if strategy_filter %}&strategy={{ strategy_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle-fill"></i> No Scenarios Found</h5>
+            <p>No scenarios match your current filters. Try adjusting your selection or clearing filters.</p>
+            <a href="{% url 'zenithmentor:scenario_list' %}" class="btn btn-primary">Clear Filters</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

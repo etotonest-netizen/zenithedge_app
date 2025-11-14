@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Django
+*.log
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+static/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Deployment packages
+*.tar.gz
+*.zip
+
+# Logs
+logs/
+*.log
+
+# Credentials
+settings_local.py
+*_production.py

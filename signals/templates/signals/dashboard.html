@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ZenithEdge Intelligence Console</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --sidebar-bg: rgba(0, 0, 0, 0.3);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --hover-bg: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-gradient);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--card-border);
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        
+        .sidebar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-brand i {
+            font-size: 1.8rem;
+            color: #a78bfa;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .sidebar-menu li {
+            list-style: none;
+        }
+        
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            gap: 12px;
+        }
+        
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background: var(--hover-bg);
+            color: #fff;
+            border-left: 3px solid #a78bfa;
+            padding-left: 17px;
+        }
+        
+        .sidebar-menu li a i {
+            font-size: 1.2rem;
+            width: 24px;
+        }
+        
+        .sidebar-section-title {
+            padding: 20px 20px 10px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .new-badge {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-left: auto;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .prop-status-bar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #475569;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .prop-stat {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        
+        .prop-stat-label {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .prop-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .prop-progress-mini {
+            width: 80px;
+            height: 8px;
+            background-color: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .prop-progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            z-index: 1055 !important;
+        }
+        
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        
+        .modal-content {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-body {
+            max-height: 70vh;
+        }
+        
+        .modal-body .table {
+            color: #fff;
+        }
+        
+        .modal-body .table td {
+            border: none;
+            padding: 0.5rem;
+        }
+        
+        .score-breakdown {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-breakdown::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .score-breakdown::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .score-breakdown::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        .score-breakdown::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-close:focus {
+            box-shadow: none;
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .table {
+            color: #fff;
+            margin: 0;
+        }
+        
+        .table thead th {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: var(--card-border);
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 15px;
+        }
+        
+        .table tbody td {
+            border-color: var(--card-border);
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+        
+        .table tbody tr {
+            transition: background-color 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .badge-allowed {
+            background-color: #10b981;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge-rejected {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge-bullish {
+            background-color: #2c7a7b;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .badge-bearish {
+            background-color: #d69e2e;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .badge-neutral {
+            background-color: #4a5568;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+                .regime-badge {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        /* Nav Pills Styling */
+        .nav-pills .nav-link {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            margin-right: 0.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-pills .nav-link:hover {
+            background: var(--hover-bg);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .nav-pills .nav-link .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Session badges */
+        .session-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .session-ny {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .session-london {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .session-asia {
+            background-color: #fbbf24;
+            color: #1e293b;
+        }
+        
+        .confidence-bar {
+            height: 8px;
+            background-color: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        
+        .confidence-high {
+            background: linear-gradient(90deg, #10b981 0%, #22c55e 100%);
+        }
+        
+        .confidence-medium {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+        }
+        
+        .confidence-low {
+            background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+        }
+        
+        .symbol-badge {
+            font-weight: 600;
+            color: #60a5fa;
+            font-size: 1rem;
+        }
+        
+        /* ========================================
+           NEW INSIGHT CARD DESIGN - Complete Redesign
+           ======================================== */
+        
+        .insight-card {
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .insight-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        }
+        
+        .insight-card:hover::before {
+            opacity: 1;
+        }
+        
+        /* Card Header Section */
+        .opportunity-card-header {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .opportunity-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .opportunity-id {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .opportunity-timestamp {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .validation-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        
+        /* Card Body Section */
+        .opportunity-card-body {
+            padding: 1.25rem;
+        }
+        
+        /* Market Context Bar */
+        .market-context-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(51, 65, 85, 0.4);
+        }
+        
+        .context-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .context-label {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .context-value {
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        
+        .context-value.symbol {
+            color: #60a5fa;
+            font-size: 1.1rem;
+        }
+        
+        .context-value.regime {
+            color: #a78bfa;
+        }
+        
+        .context-value.session {
+            color: #fbbf24;
+        }
+        
+        /* KB Power Badge */
+        .kb-power-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            padding: 0.4rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+        
+        .kb-power-badge i {
+            font-size: 0.9rem;
+        }
+        
+        .kb-concepts-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.15rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        
+        /* AI Narrative Section - Redesigned */
+        .ai-narrative-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-left: 4px solid #6366f1;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .narrative-text {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: #cbd5e0;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+        
+        .narrative-fallback {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        
+        /* News Context Section - Completely New */
+        .news-context-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.08) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-left: 4px solid #fbbf24;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+        
+        .news-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+        
+        .news-icon {
+            font-size: 1rem;
+            color: #fbbf24;
+        }
+        
+        .news-label {
+            font-size: 0.75rem;
+            color: #fbbf24;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .news-time-badge {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+        }
+        
+        .news-content-text {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #cbd5e0;
+        }
+        
+        .no-news-available {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        /* Quality Metrics Footer - Redesigned */
+        .quality-metrics-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 0 0 16px 16px;
+            flex-wrap: wrap;
+        }
+        
+        .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        .metric-item i {
+            color: #6366f1;
+            font-size: 0.85rem;
+        }
+        
+        .metric-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        
+        /* Insight Details Button */
+        .insight-details-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+        
+        .insight-details-btn:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+            color: white;
+        }
+        
+        .insight-details-btn i {
+            margin-right: 0.3rem;
+        }
+        
+        /* Corporate Insight Modal - Simplified for Bootstrap 5 */
+        .insight-modal .modal-dialog {
+            max-width: 800px !important;
+        }
+        
+        .insight-modal .modal-content {
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        .insight-modal .modal-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+            border-bottom: none !important;
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1.25rem 1.75rem !important;
+        }
+        
+        .insight-modal .modal-title {
+            font-size: 1.35rem !important;
+            font-weight: 700 !important;
+            color: white !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+        }
+        
+        .insight-modal .modal-title i {
+            font-size: 1.6rem !important;
+        }
+        
+        .insight-modal .modal-body {
+            padding: 1.75rem !important;
+            color: #e2e8f0 !important;
+            max-height: 70vh !important;
+            overflow-y: auto !important;
+        }
+        
+        .insight-modal .modal-body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .insight-modal .modal-body::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 5px;
+        }
+        
+        .insight-modal .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 5px;
+        }
+        
+        .insight-modal .modal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        
+        .insight-modal .modal-footer {
+            border-top: 1px solid rgba(71, 85, 105, 0.5) !important;
+            padding: 1rem 1.75rem !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+            border-radius: 0 0 16px 16px !important;
+        }
+        
+        /* Ensure modal backdrop works */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.75) !important;
+        }
+        
+        .modal-backdrop.show {
+            opacity: 0.75 !important;
+        }
+        
+        .insight-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-left: 4px solid #6366f1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-section:hover {
+            background: rgba(30, 41, 59, 0.7);
+            border-left-color: #8b5cf6;
+            transform: translateX(5px);
+        }
+        
+        .insight-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        
+        .insight-section-icon {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+        
+        .insight-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .insight-section-content {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: #cbd5e0;
+        }
+        
+        .insight-metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .insight-metric-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-metric-card:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        .insight-metric-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .insight-metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .insight-metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .insight-card {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .insight-modal.show .modal-dialog {
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .insight-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .insight-id-badge {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .insight-timestamp {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        .insight-main-info {
+            margin-bottom: 1rem;
+        }
+        
+        .insight-symbol-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .insight-symbol-large {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+        
+        .bias-badge-large {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .insight-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-item {
+            background: #0f172a;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .metric-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .insight-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.75rem;
+            border-top: 1px solid #334155;
+        }
+        
+        .insight-status-compact {
+            font-size: 0.75rem;
+        }
+        
+        .filter-section {
+            background-color: #1e293b;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        
+        .btn-filter {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-filter:hover {
+            background-color: #2563eb;
+        }
+        
+        .no-signals {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+        
+        .timestamp {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        
+        .price-info {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .rejection-reason {
+            font-size: 0.75rem;
+            color: #fca5a5;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+        
+        /* Risk Control Warning Banner */
+        .risk-warning-banner {
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+            border: 2px solid #ef4444;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            animation: pulse-warning 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+            }
+        }
+        
+        .risk-warning-banner h4 {
+            color: #ffffff;
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+        }
+        
+        .risk-warning-banner p {
+            color: #fecaca;
+            margin-bottom: 0.5rem;
+        }
+        
+        .risk-warning-banner .btn {
+            background-color: #ffffff;
+            color: #991b1b;
+            font-weight: 600;
+            border: none;
+        }
+        
+        .risk-warning-banner .btn:hover {
+            background-color: #f1f5f9;
+        }
+        /* Purple badge for overridden status */
+        .bg-purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+        }
+        
+        .override-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .override-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+        }
+
+        /* AI Validation Styles */
+        .truth-index-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .ai-narrative-section {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 3px solid #a78bfa;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+        }
+
+        .narrative-header {
+            color: #c4b5fd;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .narrative-header i {
+            font-size: 1.1rem;
+        }
+
+        .narrative-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .explain-btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .explain-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .ai-explanation {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+            }
+        }
+
+        /* Validation filter buttons */
+        .btn-check:checked + .btn-outline-light {
+            background: var(--card-bg);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-check:checked + .btn-outline-success {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+        }
+
+        .btn-check:checked + .btn-outline-warning {
+            background: rgba(251, 191, 36, 0.2);
+            border-color: #fbbf24;
+        }
+
+        /* Notification Bell */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 2px solid #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: rgba(30, 30, 46, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-header h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notification-item.unread {
+            background: rgba(167, 139, 250, 0.1);
+            border-left: 3px solid #a78bfa;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .notification-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'signals:dashboard' %}" class="sidebar-brand">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>ZenithEdge</span>
+            </a>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'signals:dashboard' %}" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            
+            <div class="sidebar-section-title">Trading</div>
+            <li><a href="{% url 'signals:strategies' %}"><i class="bi bi-trophy"></i> Strategies</a></li>
+            <li><a href="{% url 'signals:journal_list' %}"><i class="bi bi-journal-text"></i> Trade Journal</a></li>
+            <li><a href="{% url 'backtest_form' %}"><i class="bi bi-graph-up-arrow"></i> Backtest</a></li>
+            <li><a href="{% url 'signals:webhook_setup' %}"><i class="bi bi-broadcast"></i> Webhook Setup</a></li>
+            
+            <div class="sidebar-section-title">Tools & Features</div>
+            <li><a href="/autopsy/market-analyst/"><i class="bi bi-graph-up"></i> Zenith Market Analyst <span class="new-badge">NEW</span></a></li>
+            <li><a href="/propcoach/"><i class="bi bi-trophy-fill"></i> PropCoach <span class="new-badge">NEW</span></a></li>
+            <li><a href="{% url 'zenithmentor:dashboard' %}"><i class="bi bi-mortarboard-fill"></i> ZenithMentor</a></li>
+            <li><a href="{% url 'zennews:dashboard' %}"><i class="bi bi-newspaper"></i> ZenNews <span class="new-badge">NEW</span></a></li>
+            <li><a href="{% url 'bot:bot_ask' %}"><i class="bi bi-robot"></i> ZenBot</a></li>
+            <li><a href="{% url 'bot:conversation_history' %}"><i class="bi bi-clock-history"></i> Chat History</a></li>
+            
+            <div class="sidebar-section-title">Challenge</div>
+            <li><a href="{% url 'signals:challenge_setup' %}"><i class="bi bi-gear"></i> Setup</a></li>
+            <li><a href="{% url 'signals:challenge_overview' %}"><i class="bi bi-bar-chart"></i> Overview</a></li>
+            
+            <div class="sidebar-section-title">Analytics & Transparency</div>
+            <li><a href="{% url 'signals:validation_track_record' %}"><i class="bi bi-graph-up-arrow"></i> AI Track Record <span class="new-badge">NEW</span></a></li>
+            
+            <div class="sidebar-section-title">Support & Account</div>
+            <li><a href="{% if user.is_staff %}{% url 'support:admin_inbox' %}{% else %}{% url 'support:list' %}{% endif %}"><i class="bi bi-life-preserver"></i> Support</a></li>
+            <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle"></i> Profile</a></li>
+            {% if user.is_staff %}
+            <li><a href="{% url 'admin_dashboard:dashboard' %}"><i class="bi bi-shield-check"></i> Admin Dashboard</a></li>
+            {% endif %}
+            <li><a href="{% url 'accounts:logout' %}" class="text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-3">
+                        <i class="bi bi-bar-chart-line"></i> Trading Opportunities Dashboard
+                    </h1>
+                    <p class="mb-0 text-white-50">Real-time monitoring of ZenithEdge market opportunities</p>
+                </div>
+                
+                <!-- Notification Bell -->
+                <div class="position-relative">
+                    <div class="notification-bell" id="notificationBell" onclick="toggleNotifications()">
+                        <i class="bi bi-bell fs-2"></i>
+                        <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+                    </div>
+                    
+                    <!-- Notification Dropdown -->
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h6>Market Insights</h6>
+                            <a href="/autopsy/market-analyst/" class="text-decoration-none text-white-50 small">View All</a>
+                        </div>
+                        <div id="notificationList">
+                            <div class="notification-empty">
+                                <i class="bi bi-bell-slash fs-1 mb-2"></i>
+                                <p class="mb-0">No new insights yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard Quick Access -->
+        {% if user.is_staff %}
+        <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-shield-check fs-3 me-3"></i>
+                <div class="flex-grow-1">
+                    <h5 class="alert-heading mb-1">Admin Control Panel Available</h5>
+                    <p class="mb-0">Access comprehensive system management, analytics, and user administration.</p>
+                </div>
+                <a href="{% url 'admin_dashboard:dashboard' %}" class="btn btn-light btn-sm ms-3">
+                    <i class="bi bi-speedometer"></i> Open Admin Dashboard
+                </a>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <!-- Prop Challenge Safety Badge -->
+        {% if prop_safety %}
+        <div class="position-relative">
+            <div class="alert alert-{{ prop_safety.color }} d-inline-flex align-items-center mb-3 float-end" style="max-width: 350px;">
+                <span class="fs-3 me-2">{{ prop_safety.icon }}</span>
+                <div>
+                    <strong class="d-block">{{ prop_safety.status|title }}</strong>
+                    <small>{{ prop_safety.message }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        {% endif %}
+
+
+        <!-- Risk Control Warning Banner -->
+        {% if risk_halted %}
+        <div class="risk-warning-banner">
+            <h4>
+                <i class="bi bi-exclamation-triangle-fill"></i> 🚫 AUTO-TRADING HALTED
+            </h4>
+            <p><strong>Reason:</strong> {{ risk_halt_reason }}</p>
+            <p><strong>Triggered At:</strong> {{ risk_halt_time|date:"Y-m-d H:i:s" }} UTC</p>
+            <p class="mb-3">
+                <i class="bi bi-info-circle"></i> All incoming opportunities will be blocked until risk controls are manually reset.
+            </p>
+            <a href="/admin/signals/riskcontrol/" class="btn btn-sm">
+                <i class="bi bi-gear"></i> Manage Risk Controls
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Prop Challenge Status Bar -->
+        {% if prop_progress %}
+        <div class="prop-status-bar mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="prop-stat">
+                        <div class="prop-stat-label">
+                            <i class="bi bi-activity"></i> Challenge Status
+                        </div>
+                        <div class="prop-stat-value">
+                            {% if prop_progress.status == 'active' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> ACTIVE
+                                </span>
+                            {% elif prop_progress.status == 'paused' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-pause-circle"></i> PAUSED
+                                </span>
+                            {% elif prop_progress.status == 'passed' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-trophy"></i> PASSED
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> FAILED
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="prop-stat">
+                        <div class="prop-stat-label">
+                            <i class="bi bi-currency-dollar"></i> Current Balance
+                        </div>
+                        <div class="prop-stat-value">
+                            <span class="{% if prop_progress.total_pnl > 0 %}text-success{% elif prop_progress.total_pnl < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                ${{ prop_progress.get_current_balance|floatformat:2 }}
+                            </span>
+                            <div class="small text-muted">
+                                P&L: {{ prop_progress.total_pnl|floatformat:2|stringformat:"+.2f" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="prop-stat">
+                        <div class="prop-stat-label">
+                            <i class="bi bi-graph-down"></i> Daily Loss Remaining
+                        </div>
+                        <div class="prop-stat-value">
+                            {% with daily_remaining=prop_progress.get_daily_loss_remaining %}
+                            <span class="{% if daily_remaining < 100 %}text-danger{% elif daily_remaining < 500 %}text-warning{% else %}text-success{% endif %}">
+                                ${{ daily_remaining|floatformat:2 }}
+                            </span>
+                            <div class="small text-muted">
+                                Today: {{ prop_progress.daily_pnl|floatformat:2|stringformat:"+.2f" }}
+                            </div>
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="prop-stat">
+                        <div class="prop-stat-label">
+                            <i class="bi bi-bar-chart"></i> Trading Stats
+                        </div>
+                        <div class="prop-stat-value">
+                            <div class="small">
+                                <div>Trades: {{ prop_progress.total_trades }}</div>
+                                <div class="text-success">Wins: {{ prop_progress.winning_trades }}</div>
+                                <div class="text-danger">Losses: {{ prop_progress.losing_trades }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- View Toggle Tabs -->
+        <div class="mb-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link {% if view_mode == 'live' or not view_mode %}active{% endif %}" 
+                       href="?view=live">
+                        <i class="bi bi-play-circle"></i> Live Opportunities
+                        <span class="badge bg-success ms-1">{{ passed_signals }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if view_mode == 'archive' %}active{% endif %}" 
+                       href="?view=archive">
+                        <i class="bi bi-archive"></i> Archive (Blocked)
+                        <span class="badge bg-danger ms-1">{{ blocked_signals }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="stats-value text-primary">{{ total_signals }}</div>
+                    <div class="stats-label">Total Opportunities</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="stats-value text-success">{{ allowed_signals }}</div>
+                    <div class="stats-label">Approved Opportunities</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="stats-value text-danger">{{ rejected_signals }}</div>
+                    <div class="stats-label">Declined Opportunities</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="stats-value text-info">{{ avg_confidence|floatformat:1 }}%</div>
+                    <div class="stats-label">Avg Confidence</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation Stats (conditionally show based on view) -->
+        {% if view_mode == 'live' or not view_mode %}
+        <div class="alert alert-success border-start border-success border-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Live Opportunities</strong> - Showing {{ passed_signals }} opportunities that passed all validation checks
+                </div>
+            </div>
+        </div>
+        {% elif view_mode == 'archive' %}
+        <div class="alert alert-warning border-start border-warning border-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Archive</strong> - Showing {{ blocked_signals }} opportunities blocked by validation pipeline
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small">Quality</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="allowed" {% if request.GET.status == 'allowed' %}selected{% endif %}>High Quality</option>
+                        <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Low Quality</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Bias</label>
+                    <select name="side" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="buy" {% if request.GET.side == 'buy' %}selected{% endif %}>Bullish</option>
+                        <option value="sell" {% if request.GET.side == 'sell' %}selected{% endif %}>Bearish</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Regime</label>
+                    <select name="regime" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="Trend" {% if request.GET.regime == 'Trend' %}selected{% endif %}>Trend</option>
+                        <option value="Breakout" {% if request.GET.regime == 'Breakout' %}selected{% endif %}>Breakout</option>
+                        <option value="MeanReversion" {% if request.GET.regime == 'MeanReversion' %}selected{% endif %}>Mean Reversion</option>
+                        <option value="Squeeze" {% if request.GET.regime == 'Squeeze' %}selected{% endif %}>Squeeze</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Symbol</label>
+                    <input type="text" name="symbol" class="form-control form-control-sm" placeholder="e.g. BTCUSDT" value="{{ request.GET.symbol }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Strategy</label>
+                    <select name="strategy" class="form-select form-select-sm">
+                        <option value="">All Strategies</option>
+                        {% for strategy in all_strategies %}
+                        <option value="{{ strategy }}" {% if request.GET.strategy == strategy %}selected{% endif %}>{{ strategy }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Min AI Score: <span id="scoreValue">{{ request.GET.min_score|default:"0" }}</span></label>
+                    <input type="range" class="form-range" name="min_score" min="0" max="100" value="{{ request.GET.min_score|default:"0" }}" 
+                           id="scoreSlider" oninput="document.getElementById('scoreValue').textContent = this.value">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Evaluation Status</label>
+                    <div class="d-flex flex-column gap-1" style="font-size: 0.85rem;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="eval_status" value="passed" 
+                                   id="evalPassed" {% if 'passed' in request.GET.getlist.eval_status %}checked{% endif %}>
+                            <label class="form-check-label" for="evalPassed">
+                                🟢 Approved
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="eval_status" value="blocked" 
+                                   id="evalBlocked" {% if 'blocked' in request.GET.getlist.eval_status %}checked{% endif %}>
+                            <label class="form-check-label" for="evalBlocked">
+                                🔴 Blocked
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="eval_status" value="overridden" 
+                                   id="evalOverridden" {% if 'overridden' in request.GET.getlist.eval_status %}checked{% endif %}>
+                            <label class="form-check-label" for="evalOverridden">
+                                🟣 Overridden
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Min AI Score</label>
+                    <input type="range" name="min_score" class="form-range" min="0" max="100" step="5" value="{{ request.GET.min_score|default:'0' }}" id="minScoreSlider">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">0</small>
+                        <small class="text-primary fw-bold" id="minScoreValue">{{ request.GET.min_score|default:'0' }}</small>
+                        <small class="text-muted">100</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-filter btn-sm w-100">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{% url 'signals:dashboard' %}" class="btn btn-secondary btn-sm w-100">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- AI Validation Filter -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="validationFilter" id="filterAll" checked onchange="filterSignals('all')">
+                        <label class="btn btn-outline-light" for="filterAll">
+                            <i class="bi bi-grid-3x3"></i> All Opportunities
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="validationFilter" id="filterApproved" onchange="filterSignals('approved')">
+                        <label class="btn btn-outline-success" for="filterApproved">
+                            <i class="bi bi-check-circle"></i> High Quality (≥80)
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="validationFilter" id="filterConditional" onchange="filterSignals('conditional')">
+                        <label class="btn btn-outline-warning" for="filterConditional">
+                            <i class="bi bi-exclamation-triangle"></i> Medium Quality (60-80)
+                        </label>
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showNarratives" checked onchange="toggleNarratives()">
+                        <label class="form-check-label" for="showNarratives">
+                            <i class="bi bi-chat-left-text"></i> Show AI Narratives
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Insights Grid -->
+        <div class="table-container">
+            <h4 class="mb-4">
+                <i class="bi bi-lightbulb"></i> Market Opportunities
+                <span class="badge bg-secondary">{{ signals|length }}</span>
+            </h4>
+            
+            {% if signals %}
+            <!-- NEW CARD GRID LAYOUT -->
+            <div class="row g-4">
+                {% for signal in signals %}
+                <div class="col-md-6 col-lg-4" data-validation-status="{{ signal.validation.status|default:'unknown' }}">
+                    <div class="insight-card">
+                        
+                        <!-- CARD HEADER -->
+                        <div class="opportunity-card-header">
+                            <div class="opportunity-meta">
+                                <span class="opportunity-id">#{{ signal.id }}</span>
+                                <span class="opportunity-timestamp">
+                                    <i class="bi bi-clock"></i> {{ signal.received_at|date:"M d, H:i" }}
+                                </span>
+                            </div>
+                            {% if signal.validation %}
+                            <span class="validation-badge badge bg-{{ signal.validation.get_status_badge_color }}">
+                                {{ signal.validation.get_status_icon }} {{ signal.validation.truth_index|floatformat:0 }}%
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- CARD BODY -->
+                        <div class="opportunity-card-body">
+                            
+                            <!-- Market Context Bar -->
+                            <div class="market-context-bar">
+                                <div class="context-item">
+                                    <div class="context-label">Symbol</div>
+                                    <div class="context-value symbol">{{ signal.symbol }}</div>
+                                </div>
+                                <div class="context-item">
+                                    <div class="context-label">Timeframe</div>
+                                    <div class="context-value">{{ signal.timeframe }}</div>
+                                </div>
+                                <div class="context-item">
+                                    <div class="context-label">Regime</div>
+                                    <div class="context-value regime">{{ signal.regime }}</div>
+                                </div>
+                                <div class="context-item">
+                                    <div class="context-label">Session</div>
+                                    <div class="context-value session">{{ signal.session|default:"N/A" }}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- KB Power Badge -->
+                            {% if signal.validation and signal.validation.kb_concepts_used > 0 %}
+                            <div class="kb-power-badge">
+                                <i class="bi bi-cpu"></i>
+                                <span>Knowledge Engine v2.0</span>
+                                <span class="kb-concepts-count">{{ signal.validation.kb_concepts_used }} concepts</span>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- AI Narrative Box -->
+                            <div class="ai-narrative-box">
+                                <div class="narrative-text">
+                                    {% if signal.validation and signal.validation.context_summary and signal.validation.kb_concepts_used > 0 %}
+                                        <!-- KB-powered narrative -->
+                                        {{ signal.validation.context_summary }}
+                                    {% else %}
+                                        <!-- Fallback narrative with variety -->
+                                        <span class="narrative-fallback">
+                                            {% if signal.side == 'buy' %}
+                                                {% if signal.regime|lower == 'ranging' %}
+                                                Compression patterns forming near {{ signal.price|default:'key levels' }} within {{ signal.session|default:'current' }} session. Price consolidation historically precedes directional expansion.
+                                                {% elif signal.regime|lower == 'trending' %}
+                                                Continuation patterns align with momentum characteristics as {{ signal.session|default:'session' }} liquidity increases. Higher timeframe structure supports trajectory.
+                                                {% else %}
+                                                Accumulation signals developing within {{ signal.session|default:'active' }} session parameters. Structure formation suggests directional resolution ahead.
+                                                {% endif %}
+                                            {% else %}
+                                                {% if signal.regime|lower == 'ranging' %}
+                                                Range contraction near {{ signal.price|default:'pivot zones' }} as {{ signal.session|default:'current' }} session unfolds. Energy building for expansion phase.
+                                                {% elif signal.regime|lower == 'trending' %}
+                                                Downward momentum persists through {{ signal.session|default:'session' }} hours. Structure integrity maintained across timeframes.
+                                                {% else %}
+                                                Distribution characteristics present within {{ signal.session|default:'active' }} session. Technical structure indicates directional development forming.
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- News Context Section -->
+                            {% if signal.validation and signal.validation.quality_metrics and signal.validation.quality_metrics.news_context %}
+                            <div class="news-context-section">
+                                <div class="news-header">
+                                    <i class="bi bi-newspaper news-icon"></i>
+                                    <span class="news-label">Market News</span>
+                                    <span class="news-time-badge">2h ago</span>
+                                </div>
+                                <div class="news-content-text">
+                                    {{ signal.validation.quality_metrics.news_context }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="news-context-section">
+                                <div class="no-news-available">
+                                    <i class="bi bi-info-circle"></i> No recent market news for {{ signal.symbol }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                        </div>
+                        
+                        <!-- QUALITY METRICS FOOTER WITH INSIGHT DETAILS BUTTON -->
+                        <div class="quality-metrics-footer">
+                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; flex: 1;">
+                                {% if signal.validation and signal.validation.quality_metrics %}
+                                    {% if signal.validation.quality_metrics.insight_index %}
+                                    <div class="metric-item">
+                                        <i class="bi bi-bar-chart-line"></i>
+                                        <span>Insight: <span class="metric-value">{{ signal.validation.quality_metrics.insight_index }}%</span></span>
+                                    </div>
+                                    {% endif %}
+                                    {% if signal.validation.quality_metrics.linguistic_uniqueness %}
+                                    <div class="metric-item">
+                                        <i class="bi bi-stars"></i>
+                                        <span>Unique: <span class="metric-value">{{ signal.validation.quality_metrics.linguistic_uniqueness }}%</span></span>
+                                    </div>
+                                    {% endif %}
+                                    {% if signal.validation.quality_metrics.generation_time_ms %}
+                                    <div class="metric-item">
+                                        <i class="bi bi-lightning"></i>
+                                        <span><span class="metric-value">{{ signal.validation.quality_metrics.generation_time_ms }}ms</span></span>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="metric-item" style="color: #64748b; font-size: 0.8rem;">
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>Quality metrics pending...</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <!-- ALWAYS VISIBLE BUTTON -->
+                            <a href="/signals/insight/{{ signal.id }}/" 
+                               target="_blank"
+                               class="btn btn-sm insight-details-btn" 
+                               title="View Full Insight Details (Opens in new tab)"
+                               style="white-space: nowrap; text-decoration: none;">
+                                <i class="bi bi-box-arrow-up-right"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="no-signals">
+                <i class="bi bi-inbox" style="font-size: 4rem; color: #475569;"></i>
+                <h4 class="mt-3">No Signals Found</h4>
+                <p>Waiting for signals from TradingView...</p>
+            </div>
+            {% endif %}
+            
+            <!-- CORPORATE INSIGHT DETAILS MODALS -->
+            {% for signal in signals %}
+            <div class="modal fade insight-modal" id="insightModal{{ signal.id }}" tabindex="-1" aria-labelledby="insightModalLabel{{ signal.id }}" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="insightModalLabel{{ signal.id }}">
+                                <i class="bi bi-lightbulb-fill"></i>
+                                <span>Insight Details: {{ signal.symbol }} #{{ signal.id }}</span>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            
+                            <!-- Key Metrics Grid -->
+                            <div class="insight-metric-grid">
+                                <div class="insight-metric-card">
+                                    <div class="insight-metric-icon">🎯</div>
+                                    <div class="insight-metric-label">Confidence</div>
+                                    <div class="insight-metric-value">{{ signal.confidence|floatformat:0 }}%</div>
+                                </div>
+                                <div class="insight-metric-card">
+                                    <div class="insight-metric-icon">🧠</div>
+                                    <div class="insight-metric-label">Insight Index</div>
+                                    <div class="insight-metric-value">
+                                        {% if signal.validation and signal.validation.quality_metrics.insight_index %}
+                                            {{ signal.validation.quality_metrics.insight_index }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="insight-metric-card">
+                                    <div class="insight-metric-icon">⚡</div>
+                                    <div class="insight-metric-label">Truth Index</div>
+                                    <div class="insight-metric-value">
+                                        {% if signal.validation %}
+                                            {{ signal.validation.truth_index|floatformat:0 }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="insight-metric-card">
+                                    <div class="insight-metric-icon">✨</div>
+                                    <div class="insight-metric-label">Uniqueness</div>
+                                    <div class="insight-metric-value">
+                                        {% if signal.validation and signal.validation.quality_metrics.linguistic_uniqueness %}
+                                            {{ signal.validation.quality_metrics.linguistic_uniqueness }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AI Insight Explanation -->
+                            <div class="insight-section">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-robot insight-section-icon"></i>
+                                    <span class="insight-section-title">AI Insight</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    {% if signal.validation and signal.validation.context_summary %}
+                                        {{ signal.validation.context_summary }}
+                                    {% else %}
+                                        <em style="color: #94a3b8;">No AI-generated insight available for this opportunity.</em>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Reasoning Section -->
+                            <div class="insight-section">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-lightbulb insight-section-icon"></i>
+                                    <span class="insight-section-title">Reasoning</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    {% if signal.validation and signal.validation.reasoning %}
+                                        {{ signal.validation.reasoning }}
+                                    {% else %}
+                                        Market conditions at <strong>{{ signal.symbol }}</strong> on <strong>{{ signal.timeframe }}</strong> timeframe indicate 
+                                        <strong style="color: {% if signal.side == 'buy' %}#10b981{% else %}#ef4444{% endif %};">{{ signal.side|upper }}</strong> opportunity.
+                                        Regime classification: <strong style="color: #a78bfa;">{{ signal.regime }}</strong>.
+                                        Session timing: <strong style="color: #fbbf24;">{{ signal.session|default:"N/A" }}</strong>.
+                                        {% if signal.validation %}
+                                            <br><br>
+                                            Validation pipeline assigned <strong style="color: #6366f1;">{{ signal.validation.truth_index|floatformat:0 }}%</strong> truth index 
+                                            based on multi-factor analysis including market structure, momentum, and volatility conditions.
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Observation Cue -->
+                            <div class="insight-section">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-eye insight-section-icon"></i>
+                                    <span class="insight-section-title">Observation Cue</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    Monitor <strong>{{ signal.symbol }}</strong> price action near <strong>{{ signal.price|default:"current levels" }}</strong>. 
+                                    Key observation points:
+                                    <ul style="margin-top: 1rem; line-height: 2;">
+                                        <li>Watch for {% if signal.side == 'buy' %}bullish{% else %}bearish{% endif %} confirmation signals</li>
+                                        <li>Validate {{ signal.regime }} regime continuation</li>
+                                        <li>Monitor {{ signal.session|default:"session" }} liquidity patterns</li>
+                                        <li>Observe {{ signal.timeframe }} structure integrity</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- News Context -->
+                            <div class="insight-section">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-newspaper insight-section-icon"></i>
+                                    <span class="insight-section-title">News Context</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    {% if signal.validation and signal.validation.quality_metrics and signal.validation.quality_metrics.news_context %}
+                                        {{ signal.validation.quality_metrics.news_context }}
+                                    {% else %}
+                                        <em style="color: #94a3b8;">No recent market news available for {{ signal.symbol }} in the last 12 hours.</em>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Suggestion -->
+                            <div class="insight-section" style="border-left-color: #fbbf24;">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-star insight-section-icon" style="color: #fbbf24;"></i>
+                                    <span class="insight-section-title" style="color: #fbbf24;">Suggestion</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    <strong>📌 Action Plan:</strong> Observe {{ signal.symbol }} reaction near {{ signal.price|default:"observation zone" }}. 
+                                    Market structure confirmation requires sustained {{ signal.timeframe }} momentum.
+                                    {% if signal.validation and signal.validation.get_key_factors %}
+                                        <br><br>
+                                        <strong>Key Factors to Watch:</strong>
+                                        <ul style="margin-top: 0.5rem;">
+                                            {% for factor in signal.validation.get_key_factors %}
+                                            <li>{{ factor }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Validation Breakdown (if available) -->
+                            {% if signal.validation and signal.validation.breakdown %}
+                            <div class="insight-section" style="border-left-color: #10b981;">
+                                <div class="insight-section-header">
+                                    <i class="bi bi-check-circle insight-section-icon" style="color: #10b981;"></i>
+                                    <span class="insight-section-title" style="color: #10b981;">Validation Breakdown</span>
+                                </div>
+                                <div class="insight-section-content">
+                                    <div class="row g-3">
+                                        {% for key, value in signal.validation.breakdown.items %}
+                                        <div class="col-md-6">
+                                            <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 8px; border: 1px solid rgba(71, 85, 105, 0.5);">
+                                                <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;">{{ key|title|cut:"_" }}</div>
+                                                {% widthratio value 1 100 as percentage %}
+                                                <div style="font-size: 1.5rem; font-weight: 700; color: {% if percentage >= 80 %}#10b981{% elif percentage >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                                    {{ percentage }}%
+                                                </div>
+                                                <div style="height: 6px; background: rgba(51, 65, 85, 0.5); border-radius: 3px; margin-top: 0.5rem; overflow: hidden;">
+                                                    <div style="height: 100%; width: {{ percentage }}%; background: {% if percentage >= 80 %}#10b981{% elif percentage >= 60 %}#f59e0b{% else %}#ef4444{% endif %}; transition: width 0.5s ease;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid rgba(71, 85, 105, 0.5); background: rgba(15, 23, 42, 0.5);">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle"></i> Close
+                            </button>
+                            <a href="{% url 'signals:trade_replay' signal.id %}" class="btn btn-primary">
+                                <i class="bi bi-play-circle"></i> View Trade Replay
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- OLD MODALS for each signal -->
+            {% for signal in signals %}
+                <div class="modal fade" id="signalModal{{ signal.id }}" tabindex="-1" aria-labelledby="signalModalLabel{{ signal.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff;">
+                            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                <h5 class="modal-title" id="signalModalLabel{{ signal.id }}">
+                                    <i class="bi bi-info-circle"></i> Signal #{{ signal.id }} Details
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="bi bi-bar-chart"></i> Trade Information
+                                                </h6>
+                                                <table class="table table-sm table-borderless">
+                                                    <tr>
+                                                        <td class="text-muted">Symbol:</td>
+                                                        <td><strong>{{ signal.symbol }}</strong> ({{ signal.timeframe }})</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Market Bias:</td>
+                                                        <td>
+                                                            {% if signal.side == 'buy' %}
+                                                                <span class="badge-bullish"><i class="bi bi-graph-up"></i> BULLISH</span>
+                                                            {% else %}
+                                                                <span class="badge-bearish"><i class="bi bi-graph-down"></i> BEARISH</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Strategy:</td>
+                                                        <td><span class="badge bg-primary">{{ signal.strategy }}</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Market Phase:</td>
+                                                        <td><span class="regime-badge">{{ signal.regime }}</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Session:</td>
+                                                        <td>{{ signal.session }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Observation Price:</td>
+                                                        <td><strong>{{ signal.price|default:"N/A" }}</strong></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Confidence Level:</td>
+                                                        <td class="text-info">{{ signal.confidence|floatformat:1 }}%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="text-muted">Insight Quality:</td>
+                                                        <td>
+                                                            {% if signal.ai_score %}
+                                                                {{ signal.ai_score.ai_score }}/100
+                                                            {% else %}
+                                                                <span class="text-muted">Analyzing...</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="bi bi-robot"></i> ZenBot AI Score
+                                                </h6>
+                                                {% if signal.ai_score %}
+                                                    <div class="mb-3">
+                                                        {% with badge=signal.ai_score.get_score_badge %}
+                                                        <div class="text-center mb-3">
+                                                            <span class="badge bg-{{ badge.color }}" style="font-size: 2rem; padding: 1rem;">
+                                                                {{ signal.ai_score.ai_score }}
+                                                            </span>
+                                                            <div class="mt-2">{{ badge.label }}</div>
+                                                        </div>
+                                                        {% endwith %}
+                                                        <div class="small">
+                                                            <div class="mb-2"><strong>Confidence:</strong> {{ signal.confidence|floatformat:1 }}%</div>
+                                                            {% if signal.ai_score.score_breakdown %}
+                                                            <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
+                                                            <div class="mb-2"><strong><i class="bi bi-list-check"></i> Score Breakdown:</strong></div>
+                                                            <div class="score-breakdown" style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">{{ signal.ai_score.score_breakdown }}</div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <p class="text-muted">AI score not generated for this signal.</p>
+                                                {% endif %}
+                                                
+                                                <h6 class="text-muted mb-3 mt-4">
+                                                    <i class="bi bi-shield-check"></i> Prop & Risk Compliance
+                                                </h6>
+                                                {% if signal.evaluation %}
+                                                    {% with eval=signal.evaluation %}
+                                                    <div class="small">
+                                                        <div class="mb-2">
+                                                            <strong>Status:</strong>
+                                                            <span class="badge bg-{{ eval.get_badge_color }}">
+                                                                {{ eval.get_status_icon }}
+                                                                {% if eval.is_overridden %}OVERRIDDEN{% elif eval.passed %}APPROVED{% else %}BLOCKED{% endif %}
+                                                            </span>
+                                                        </div>
+                                                        {% if not eval.passed %}
+                                                        <div class="alert alert-danger py-2" style="font-size: 0.85rem;">
+                                                            <strong>Blocked Reasons:</strong>
+                                                            <ul class="mb-0 ps-3">
+                                                                {% if not eval.prop_check_passed %}<li>Failed prop challenge rules</li>{% endif %}
+                                                                {% if not eval.risk_check_passed %}<li>Failed risk controls</li>{% endif %}
+                                                                {% if not eval.validation_passed %}<li>Failed validation checks</li>{% endif %}
+                                                            </ul>
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if eval.notes %}
+                                                        <div class="mt-2"><strong>Notes:</strong> {{ eval.notes }}</div>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endwith %}
+                                                {% else %}
+                                                    <p class="text-muted">No evaluation data available.</p>
+                                                {% endif %}
+                                                
+                                                {% if signal.journal_entries.exists %}
+                                                <h6 class="text-muted mb-3 mt-4">
+                                                    <i class="bi bi-journal"></i> Trade Journal
+                                                </h6>
+                                                <a href="/signals/journal/?signal_id={{ signal.id }}" class="btn btn-sm btn-outline-info">
+                                                    <i class="bi bi-book"></i> View Journal Entry ({{ signal.journal_entries.count }})
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                            <div class="modal-footer" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Bootstrap 5 Modal Initialization (Let Bootstrap handle it naturally)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, Bootstrap modals ready');
+            
+            // Check if Bootstrap is loaded
+            if (typeof bootstrap === 'undefined') {
+                console.error('⚠️ Bootstrap is not loaded!');
+                return;
+            }
+            
+            var modalCount = document.querySelectorAll('.modal').length;
+            console.log('✅ Found ' + modalCount + ' modals ready to use');
+        });
+        
+        // Auto-refresh script (optional, uncomment to enable)
+        // setTimeout(function() {
+        //     location.reload();
+        // }, 30000);
+
+        // AI Validation Filter Functions
+        function filterSignals(status) {
+            console.log('Filtering signals by validation status:', status);
+            var cards = document.querySelectorAll('[data-validation-status]');
+            
+            cards.forEach(function(card) {
+                var cardStatus = card.getAttribute('data-validation-status');
+                
+                if (status === 'all') {
+                    card.style.display = 'block';
+                } else if (status === 'approved' && cardStatus === 'approved') {
+                    card.style.display = 'block';
+                } else if (status === 'conditional' && cardStatus === 'conditional') {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleNarratives() {
+            var checkbox = document.getElementById('showNarratives');
+            var narrativeSections = document.querySelectorAll('.ai-narrative-section');
+            
+            narrativeSections.forEach(function(section) {
+                if (checkbox.checked) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+            
+            console.log('Narratives toggled:', checkbox.checked);
+        }
+
+        function toggleExplanation(signalId) {
+            var explanation = document.getElementById('explanation-' + signalId);
+            var btn = event.target.closest('.explain-btn');
+            
+            if (explanation.style.display === 'none' || explanation.style.display === '') {
+                explanation.style.display = 'block';
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-lightbulb-fill"></i> Hide Details';
+                }
+            } else {
+                explanation.style.display = 'none';
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-lightbulb"></i> Explain AI';
+                }
+            }
+        }
+
+        // Min score slider update
+        var minScoreSlider = document.getElementById('minScoreSlider');
+        var minScoreValue = document.getElementById('minScoreValue');
+        
+        if (minScoreSlider && minScoreValue) {
+            minScoreSlider.addEventListener('input', function() {
+                minScoreValue.textContent = this.value;
+            });
+        }
+        
+        // Initialize Bootstrap tooltips for KB info icons
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            console.log('✅ Bootstrap tooltips initialized');
+            
+            // Start checking for new insights
+            checkForNewInsights();
+            // Poll every 30 seconds
+            setInterval(checkForNewInsights, 30000);
+        });
+
+        // Notification Bell Functions
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+            
+            // Mark all as read when opened
+            if (dropdown.classList.contains('show')) {
+                markNotificationsAsRead();
+            }
+        }
+
+        // Close notifications when clicking outside
+        document.addEventListener('click', function(event) {
+            const bell = document.getElementById('notificationBell');
+            const dropdown = document.getElementById('notificationDropdown');
+            
+            if (bell && dropdown && !bell.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function checkForNewInsights() {
+            fetch('/autopsy/api/recent-insights/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.insights && data.insights.length > 0) {
+                        updateNotificationBell(data.insights);
+                        updateNotificationList(data.insights);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for insights:', error);
+                });
+        }
+
+        function updateNotificationBell(insights) {
+            const badge = document.getElementById('notificationCount');
+            const unreadCount = insights.filter(i => !i.read).length;
+            
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function updateNotificationList(insights) {
+            const list = document.getElementById('notificationList');
+            
+            if (insights.length === 0) {
+                list.innerHTML = `
+                    <div class="notification-empty">
+                        <i class="bi bi-bell-slash fs-1 mb-2"></i>
+                        <p class="mb-0">No new insights yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = insights.map(insight => `
+                <div class="notification-item ${insight.read ? '' : 'unread'}" 
+                     onclick="window.location.href='/autopsy/insight/${insight.id}/'">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-graph-up text-success"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">${insight.symbol} ${insight.timeframe}</div>
+                            <div class="small text-white-50">${insight.regime} • ${insight.structure}</div>
+                            <div class="notification-time">${insight.time_ago}</div>
+                        </div>
+                        <div class="badge ${getQualityBadgeClass(insight.insight_index)}">
+                            ${insight.insight_index}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getQualityBadgeClass(score) {
+            if (score >= 80) return 'bg-success';
+            if (score >= 65) return 'bg-info';
+            if (score >= 50) return 'bg-warning';
+            return 'bg-secondary';
+        }
+
+        function markNotificationsAsRead() {
+            // Store in localStorage that notifications have been viewed
+            const lastCheck = new Date().toISOString();
+            localStorage.setItem('lastInsightCheck', lastCheck);
+            
+            // Hide the badge
+            const badge = document.getElementById('notificationCount');
+            badge.style.display = 'none';
+        }
+    </script>
+    </div> <!-- Close main-content -->
+    
+    {% include "bot/chat_widget.html" %}
+</body>
+</html>

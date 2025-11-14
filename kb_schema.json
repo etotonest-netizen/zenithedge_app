@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Trading Knowledge Base Schema",
+  "description": "Schema for knowledge base entries, relationships, and provenance tracking",
+  "version": "1.0.0",
+  
+  "definitions": {
+    "source": {
+      "type": "object",
+      "description": "Authoritative knowledge source",
+      "properties": {
+        "id": {"type": "integer"},
+        "domain": {"type": "string", "format": "hostname"},
+        "name": {"type": "string"},
+        "base_url": {"type": "string", "format": "uri"},
+        "trust_level": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "blacklisted"]
+        },
+        "respect_robots_txt": {"type": "boolean", "default": true},
+        "rate_limit_seconds": {"type": "integer", "minimum": 1, "default": 2},
+        "max_depth": {"type": "integer", "minimum": 1, "default": 3},
+        "last_crawled": {"type": "string", "format": "date-time"},
+        "total_entries": {"type": "integer", "minimum": 0},
+        "active": {"type": "boolean", "default": true},
+        "notes": {"type": "string"}
+      },
+      "required": ["domain", "name", "base_url", "trust_level"]
+    },
+    
+    "knowledge_entry": {
+      "type": "object",
+      "description": "Core knowledge base entry with trading concept definition",
+      "properties": {
+        "id": {"type": "integer"},
+        "term": {
+          "type": "string",
+          "description": "Canonical term (e.g., 'Order Block')",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Alternative names (e.g., ['OB', 'demand zone'])",
+          "items": {"type": "string"}
+        },
+        "summary": {
+          "type": "string",
+          "description": "One-liner definition (1-2 sentences)",
+          "minLength": 20,
+          "maxLength": 500
+        },
+        "definition": {
+          "type": "string",
+          "description": "Detailed explanation (3-5 paragraphs)",
+          "minLength": 100
+        },
+        "examples": {
+          "type": "string",
+          "description": "Usage examples and scenarios"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "smc", "ict", "ta", "risk", "psychology",
+            "fundamentals", "orderflow", "market_structure",
+            "liquidity", "other"
+          ]
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["intro", "intermediate", "advanced", "expert"]
+        },
+        "asset_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["any", "forex", "crypto", "stocks", "futures", "commodities"]
+          }
+        },
+        "source_id": {"type": "integer"},
+        "source_url": {"type": "string", "format": "uri"},
+        "crawl_date": {"type": "string", "format": "date-time"},
+        "license_info": {"type": "string"},
+        "embedding_summary": {
+          "type": "array",
+          "description": "Vector embedding for summary text",
+          "items": {"type": "number"}
+        },
+        "embedding_full": {
+          "type": "array",
+          "description": "Vector embedding for full definition",
+          "items": {"type": "number"}
+        },
+        "embedding_model": {
+          "type": "string",
+          "default": "all-MiniLM-L6-v2"
+        },
+        "quality_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Overall quality rating"
+        },
+        "relevance_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Trading relevance"
+        },
+        "completeness_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Has examples, definition, etc."
+        },
+        "view_count": {"type": "integer", "minimum": 0},
+        "last_used": {"type": "string", "format": "date-time"},
+        "version": {"type": "integer", "minimum": 1},
+        "is_verified": {"type": "boolean", "default": false},
+        "is_active": {"type": "boolean", "default": true}
+      },
+      "required": [
+        "term", "summary", "definition", "category",
+        "source_id", "source_url", "quality_score"
+      ]
+    },
+    
+    "concept_relationship": {
+      "type": "object",
+      "description": "Graph edge between trading concepts",
+      "properties": {
+        "id": {"type": "integer"},
+        "source_concept_id": {"type": "integer"},
+        "target_concept_id": {"type": "integer"},
+        "relationship_type": {
+          "type": "string",
+          "enum": [
+            "related_to",
+            "is_subconcept_of",
+            "prerequisite_for",
+            "contraindicates",
+            "common_with",
+            "alternative_to"
+          ]
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Relationship strength"
+        },
+        "description": {
+          "type": "string",
+          "description": "Why these concepts are related"
+        },
+        "is_auto_detected": {"type": "boolean"},
+        "is_verified": {"type": "boolean"}
+      },
+      "required": [
+        "source_concept_id",
+        "target_concept_id",
+        "relationship_type",
+        "strength"
+      ]
+    },
+    
+    "crawl_log": {
+      "type": "object",
+      "description": "Audit trail for scraping activities",
+      "properties": {
+        "id": {"type": "integer"},
+        "source_id": {"type": "integer"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "status": {
+          "type": "string",
+          "enum": ["pending", "running", "completed", "failed", "partial"]
+        },
+        "urls_discovered": {"type": "integer", "minimum": 0},
+        "urls_crawled": {"type": "integer", "minimum": 0},
+        "entries_created": {"type": "integer", "minimum": 0},
+        "entries_updated": {"type": "integer", "minimum": 0},
+        "entries_skipped": {"type": "integer", "minimum": 0},
+        "errors_count": {"type": "integer", "minimum": 0},
+        "error_log": {"type": "string"},
+        "config_snapshot": {
+          "type": "object",
+          "description": "Crawl parameters used"
+        }
+      },
+      "required": ["source_id", "started_at", "status"]
+    },
+    
+    "kb_trace": {
+      "type": "object",
+      "description": "Provenance data for KB-enhanced narratives",
+      "properties": {
+        "concepts": {
+          "type": "array",
+          "description": "Concepts extracted from signal",
+          "items": {"type": "string"}
+        },
+        "sources": {
+          "type": "array",
+          "description": "KB sources cited",
+          "items": {
+            "type": "object",
+            "properties": {
+              "term": {"type": "string"},
+              "source": {"type": "string"},
+              "url": {"type": "string", "format": "uri"},
+              "score": {"type": "number"}
+            }
+          }
+        },
+        "entries": {
+          "type": "array",
+          "description": "KB entries used in narrative",
+          "items": {
+            "type": "object",
+            "properties": {
+              "concept": {"type": "string"},
+              "term": {"type": "string"},
+              "summary": {"type": "string"},
+              "category": {"type": "string"}
+            }
+          }
+        },
+        "timestamp": {"type": "string", "format": "date-time"}
+      }
+    },
+    
+    "query_cache": {
+      "type": "object",
+      "description": "Cached semantic search results",
+      "properties": {
+        "id": {"type": "integer"},
+        "query_text": {"type": "string", "maxLength": 512},
+        "query_hash": {"type": "string", "maxLength": 64},
+        "results": {
+          "type": "array",
+          "description": "Top-K KB entry IDs + scores",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "score": {"type": "number"}
+            }
+          }
+        },
+        "embedding": {
+          "type": "array",
+          "items": {"type": "number"}
+        },
+        "hit_count": {"type": "integer", "minimum": 0},
+        "last_accessed": {"type": "string", "format": "date-time"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "symbol": {"type": "string", "maxLength": 20},
+        "concept_tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "required": ["query_text", "query_hash", "results", "expires_at"]
+    },
+    
+    "kb_snapshot": {
+      "type": "object",
+      "description": "Versioned KB snapshot for reproducibility",
+      "properties": {
+        "id": {"type": "integer"},
+        "version": {"type": "integer", "minimum": 1},
+        "created_at": {"type": "string", "format": "date-time"},
+        "total_entries": {"type": "integer", "minimum": 0},
+        "total_relationships": {"type": "integer", "minimum": 0},
+        "total_sources": {"type": "integer", "minimum": 0},
+        "description": {"type": "string"},
+        "snapshot_data": {
+          "type": "object",
+          "description": "Compressed KB state"
+        },
+        "backup_path": {"type": "string"},
+        "is_current": {"type": "boolean"}
+      },
+      "required": ["version", "total_entries"]
+    }
+  },
+  
+  "examples": {
+    "knowledge_entry_example": {
+      "id": 42,
+      "term": "Order Block",
+      "aliases": ["OB", "demand zone", "supply zone"],
+      "summary": "An order block is a consolidation area where institutional traders have placed significant orders, marking key demand or supply zones in price action.",
+      "definition": "An order block represents the last up-close or down-close candle before a strong move in the opposite direction. It's considered a zone where smart money (institutional traders) have executed large orders...",
+      "examples": "Example: On EURUSD 1H chart, price formed a bearish order block at 1.0950 before dropping 80 pips. The OB acts as resistance on retests.",
+      "category": "smc",
+      "difficulty": "intermediate",
+      "asset_classes": ["any"],
+      "source_id": 1,
+      "source_url": "https://www.investopedia.com/terms/o/order-block.asp",
+      "crawl_date": "2025-01-15T10:30:00Z",
+      "license_info": "Fair Use - Educational",
+      "quality_score": 0.85,
+      "relevance_score": 0.92,
+      "completeness_score": 0.88,
+      "view_count": 142,
+      "version": 1,
+      "is_verified": true,
+      "is_active": true
+    },
+    
+    "kb_trace_example": {
+      "concepts": ["order block", "liquidity sweep", "fair value gap"],
+      "sources": [
+        {
+          "term": "Order Block",
+          "source": "Investopedia",
+          "url": "https://www.investopedia.com/terms/o/order-block.asp",
+          "score": 0.92
+        },
+        {
+          "term": "Liquidity Sweep",
+          "source": "BabyPips",
+          "url": "https://www.babypips.com/learn/forex/liquidity-sweep",
+          "score": 0.87
+        }
+      ],
+      "entries": [
+        {
+          "concept": "order block",
+          "term": "Order Block",
+          "summary": "Institutional demand zone marking key price levels",
+          "category": "smc"
+        }
+      ],
+      "timestamp": "2025-01-15T14:22:35Z"
+    }
+  }
+}
