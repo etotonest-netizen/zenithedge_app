@@ -26,17 +26,16 @@ git fetch origin
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/$BRANCH)
 
-if [ "$LOCAL" = "$REMOTE" ]; then
-    echo -e "${YELLOW}✅ Already up to date. No changes to deploy.${NC}"
-    exit 0
-fi
-
-echo -e "${GREEN}📥 New changes detected! Pulling updates...${NC}"
-git pull origin $BRANCH
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Git pull failed! Please resolve conflicts manually.${NC}"
-    exit 1
+if [ "$LOCAL" != "$REMOTE" ]; then
+    echo -e "${GREEN}📥 New changes detected! Pulling updates...${NC}"
+    git pull origin $BRANCH
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Git pull failed! Please resolve conflicts manually.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}📍 Git is up to date. Syncing files anyway...${NC}"
 fi
 
 echo "🔄 Syncing files to production directory..."
