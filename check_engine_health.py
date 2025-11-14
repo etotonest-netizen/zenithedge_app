@@ -8,11 +8,11 @@ import os
 import sys
 import django
 
-# Try production settings first, fallback to default
-if os.path.exists('zenithedge/settings_production.py'):
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings_production')
-else:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings')
+# Add current directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Always use zenithedge.settings (works for both dev and production)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings')
 
 django.setup()
 
