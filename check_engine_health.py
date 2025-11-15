@@ -11,8 +11,8 @@ import django
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Always use zenithedge.settings (works for both dev and production)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'zenithedge.settings')
+# Always use zenithedge.settings (force override cPanel env var)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'zenithedge.settings'
 
 django.setup()
 
