@@ -50,11 +50,12 @@ def engine_dashboard(request):
     # Otherwise try to render HTML template
     try:
         return render(request, 'engine/dashboard.html', {'stats': stats})
-    except:
-        # Fallback to JSON if template missing
+    except Exception as e:
+        # Fallback to JSON if template missing, but log the error
+        logger.error(f"Template rendering failed: {str(e)}")
         return JsonResponse({
-            'status': 'success',
-            'message': 'Trading Engine Dashboard (Template not available)',
+            'status': 'error',
+            'message': f'Trading Engine Dashboard (Template error: {str(e)})',
             'stats': stats,
         })
 
